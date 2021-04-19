@@ -14,17 +14,19 @@ type LoginParams struct {
 }
 
 type LoginResponse struct {
-	Token       string
-	SecretToken string
+	Token        string `json:"token"`
+	PrivateToken string `json:"privatetoken"`
 }
 
 func Login(ctx context.Context, client *http.Client, serviceURL *url.URL, params *LoginParams) (*LoginResponse, error) {
-	serviceURL.Path = path.Join(serviceURL.Path, "/login/token.php")
-	urlutil.SetQueries(serviceURL, map[string]string{
+	u := urlutil.Copy(serviceURL)
+	u.Path = path.Join(u.Path, "/login/token.php")
+	urlutil.SetQueries(u, map[string]string{
 		"username": params.Username,
 		"password": params.Password,
+		"service":  "moodle_mobile_app",
 	})
-	req, err := http.NewRequestWithContext(ctx, "GET", serviceURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
