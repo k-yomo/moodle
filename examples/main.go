@@ -21,5 +21,12 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("%#v", moodleClient)
+	courses, err := moodleClient.GetEnrolledCoursesByTimelineClassification(ctx, moodle.CourseClassificationInProgress)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, c := range courses {
+		fmt.Printf("%#v", c)
+	}
 }
