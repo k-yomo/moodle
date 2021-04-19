@@ -2,11 +2,26 @@ package moodle
 
 import (
 	"context"
-	"fmt"
 	"github.com/k-yomo/moodle/pkg/urlutil"
 	"net/http"
 	"net/url"
 )
+
+type CourseAPI interface {
+	GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error)
+}
+
+type courseAPI struct {
+	httpClient *http.Client
+	apiURL     *url.URL
+}
+
+func newCourseAPI(httpClient *http.Client, apiURL *url.URL) *courseAPI {
+	return &courseAPI{
+		httpClient: httpClient,
+		apiURL:     apiURL,
+	}
+}
 
 type CourseClassification string
 
@@ -41,21 +56,20 @@ type GetEnrolledCoursesByTimelineClassificationResponse struct {
 	NextOffset int       `json:"nextoffset"`
 }
 
-func getEnrolledCoursesByTimelineClassification(ctx context.Context, client *http.Client, apiURL *url.URL, classification CourseClassification) (*GetEnrolledCoursesByTimelineClassificationResponse, error) {
-	u := urlutil.Copy(apiURL)
+func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error) {
+	u := urlutil.Copy(c.apiURL)
 	urlutil.SetQueries(u, map[string]string{
 		"wsfunction":     "core_course_get_enrolled_courses_by_timeline_classification",
 		"classification": string(classification),
 	})
-	fmt.Println(u.String())
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	res := GetEnrolledCoursesByTimelineClassificationResponse{}
-	if err := doAndMap(client, req, &res); err != nil {
+	if err := doAndMap(c.httpClient, req, &res); err != nil {
 		return nil, err
 	}
-	return &res, nil
+	return res.Courses, nil
 }

@@ -21,7 +21,7 @@ func main() {
 		panic(err)
 	}
 
-	courses, err := moodleClient.GetEnrolledCoursesByTimelineClassification(ctx, moodle.CourseClassificationInProgress)
+	courses, err := moodleClient.CourseAPI.GetEnrolledCoursesByTimelineClassification(ctx, moodle.CourseClassificationInProgress)
 	if err != nil {
 		panic(err)
 	}

@@ -13,6 +13,8 @@ type Client struct {
 	serviceURL *url.URL
 	apiURL     *url.URL
 	opts       *ClientOptions
+
+	CourseAPI CourseAPI
 }
 
 // NewClient creates a new Moodle client.
@@ -54,13 +56,6 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		serviceURL: serviceURL,
 		apiURL:     &apiURL,
 		opts:       opts,
+		CourseAPI:  newCourseAPI(opts.HttpClient, &apiURL),
 	}
-}
-
-func (c *Client) GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error) {
-	res, err := getEnrolledCoursesByTimelineClassification(ctx, c.opts.HttpClient, c.apiURL, classification)
-	if err != nil {
-		return nil, err
-	}
-	return res.Courses, nil
 }
