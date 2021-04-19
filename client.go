@@ -2,7 +2,6 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/moodleapi"
 	"net/url"
 )
 
@@ -19,9 +18,9 @@ func NewClient(ctx context.Context, serviceURL *url.URL, token string, opt ...Cl
 }
 
 // NewClientWithLogin creates a new Moodle client with token retrieved from login request.
-func NewClientWithLogin(ctx context.Context, serviceURL *url.URL, loginParams *moodleapi.LoginParams, opt ...ClientOption) (*Client, error) {
+func NewClientWithLogin(ctx context.Context, serviceURL *url.URL, loginParams *LoginParams, opt ...ClientOption) (*Client, error) {
 	c := newClient(serviceURL, opt...)
-	resp, err := moodleapi.Login(
+	resp, err := Login(
 		ctx,
 		c.opts.HttpClient,
 		serviceURL,

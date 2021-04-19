@@ -1,4 +1,4 @@
-package moodleapi
+package moodle
 
 import (
 	"context"
