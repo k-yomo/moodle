@@ -2,17 +2,74 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/maputil"
-	"github.com/k-yomo/moodle/pkg/urlutil"
 	"net/http"
 	"net/url"
-	"strconv"
+	"time"
 )
+
+type Quiz struct {
+	ID                    int
+	CourseID              int
+	CourseModuleID        int
+	Name                  string
+	Intro                 string
+	IntroFormat           int
+	TimeOpen              time.Time
+	TimeClose             time.Time
+	TimeLimit             int
+	PreferredBehaviour    string
+	Attempts              int
+	GradeMethod           int
+	DecimalPoints         int
+	QuestionDecimalPoints int
+	SumGrades             int
+	Grade                 int
+	HasFeedback           int
+	Section               int
+	Visible               int
+	GroupMode             int
+	GroupingID            int
+}
+
+type QuizAttempt struct {
+	ID                  int
+	QuizID              int
+	UserID              int
+	Attempt             int
+	UniqueID            int
+	Layout              string
+	CurrentPage         int
+	Preview             int
+	State               string
+	TimeStart           time.Time
+	TimeFinish          time.Time
+	TimeModified        time.Time
+	TimeModifiedOffline time.Time
+	TimeCheckState      *time.Time
+	SumGrades           int
+}
+
+type QuizQuestion struct {
+	Slot              int
+	Type              string
+	Page              int
+	HtmlRaw           string
+	SequenceCheck     int
+	LastActionTime    int
+	HasAutoSavedStep  bool
+	Flagged           bool
+	Number            int
+	State             string
+	Status            string
+	BlockedByPrevious bool
+	Mark              string
+	MaxMark           int
+}
 
 type QuizAPI interface {
 	GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error)
 	GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttempt, error)
-	GetAttemptReview(ctx context.Context, attemptID int) error
+	GetAttemptReview(ctx context.Context, attemptID int) (*QuizAttempt, []*QuizQuestion, error)
 }
 
 type quizAPI struct {
@@ -27,137 +84,120 @@ func newQuizAPI(httpClient *http.Client, apiURL *url.URL) *quizAPI {
 	}
 }
 
-type Quiz struct {
-	ID                    int    `json:"id"`
-	CourseID              int    `json:"course"`
-	CourseModuleID        int    `json:"coursemodule"`
-	Name                  string `json:"name"`
-	Intro                 string `json:"intro"`
-	IntroFormat           int    `json:"introfomat"`
-	TimeOpen              int    `json:"timeopen"`
-	TimeClose             int    `json:"timeclose"`
-	TimeLimit             int    `json:"timelimit"`
-	PreferredBehaviour    string `json:"preferredbehaviour"`
-	Attempts              int    `json:"attempts"`
-	GradeMethod           int    `json:"grademethod"`
-	DecimalPoints         int    `json:"decimalpoints"`
-	QuestionDecimalPoints int    `json:"questiondecimalpoints"`
-	SumGrades             int    `json:"sumgrades"`
-	Grade                 int    `json:"grade"`
-	HasFeedback           int    `json:"hasfeedback"`
-	Section               int    `json:"section"`
-	Visible               int    `json:"visible"`
-	GroupMode             int    `json:"groupmode"`
-	GroupingID            int    `json:"groupingid"`
-}
-
-type QuizAttempt struct {
-	ID                  int    `json:"id"`
-	QuizID              int    `json:"quiz"`
-	UserID              int    `json:"userid"`
-	Attempt             int    `json:"attempt"`
-	UniqueID            int    `json:"uniqueid"`
-	Layout              string `json:"lauout"`
-	CurrentPage         int    `json:"currentpage"`
-	Preview             int    `json:"preview"`
-	State               string `json:"state"`
-	TimeStart           int    `json:"timestart"`
-	TimeFinish          int    `json:"timefinish"`
-	TimeModified        int    `json:"timemodified"`
-	TimeModifiedOffline int    `json:"timemodifiedoffline"`
-	timecheckstate      *int   `json:"timecheckstate,omitempty"`
-	SumGrades           int    `json:"sumgrades"`
-}
-
-type QuizQuestion struct {
-	Slot              int    `json:"slot"`
-	Type              string `json:"type"`
-	Page              int    `json:"page"`
-	Html              string `json:"string"`
-	SequenceCheck     int    `json:"sequencecheck"`
-	LastActionTime    int    `json:"lastactiontime"`
-	HasAutoSavedStep  bool   `json:"hasautosavedstep"`
-	Flagged           int    `json:"flagged"`
-	Number            int    `json:"number"`
-	State             string `json:"state"`
-	Status            string `json:"status"`
-	BlockedByPrevious bool   `json:"blockedbyprevious"`
-	Mark              string `json:"mark"`
-	MaxMark           int    `json:"maxmark"`
-}
-
-type GetQuizzesByCourseResponse struct {
-	Quizzes []*Quiz `json:"quizzes"`
-}
-
 func (q *quizAPI) GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error) {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
-		maputil.MergeStrMap(
-			map[string]string{"wsfunction": "mod_quiz_get_quizzes_by_courses"},
-			strArrayToQueryParams("courseids", []string{strconv.Itoa(courseID)}),
-		),
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	res, err := q.getQuizzesByCourse(ctx, courseID)
 	if err != nil {
 		return nil, err
 	}
-
-	res := GetQuizzesByCourseResponse{}
-	if err := doAndMap(q.httpClient, req, &res); err != nil {
-		return nil, err
-	}
-	return res.Quizzes, nil
-}
-
-type GetUserAttemptsResponse struct {
-	Attempts []*QuizAttempt `json:"attempts"`
+	return mapFromQuizListResponse(res.Quizzes), nil
 }
 
 func (q *quizAPI) GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttempt, error) {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
-		map[string]string{
-			"wsfunction": "mod_quiz_get_user_attempts",
-			"quizid":     strconv.Itoa(quizID),
-		},
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	res, err := q.getUserAttempts(ctx, quizID)
 	if err != nil {
 		return nil, err
 	}
-
-	res := GetUserAttemptsResponse{}
-	if err := doAndMap(q.httpClient, req, &res); err != nil {
-		return nil, err
-	}
-	return res.Attempts, nil
+	return mapFromQuizAttemptListResponse(res.Attempts), nil
 }
 
-type GetAttemptReviewResponse struct {
-	Grade   int          `json:"grade"`
-	Attempt *QuizAttempt `json:"attempt"`
-}
-
-func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) error {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
-		map[string]string{
-			"wsfunction": "mod_quiz_get_attempt_review",
-			"attemptid":  strconv.Itoa(attemptID),
-		},
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) (*QuizAttempt, []*QuizQuestion, error) {
+	res, err := q.getAttemptReview(ctx, attemptID)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
+	return mapFromQuizAttemptResponse(res.Attempt), mapFromQuizQuestionListResponse(res.Questions), nil
+}
 
-	res := GetAttemptReviewResponse{}
-	if err := doAndMap(q.httpClient, req, &res); err != nil {
-		return err
+func mapFromQuizListResponse(quizResList []*quizResponse) []*Quiz {
+	quizzes := make([]*Quiz, len(quizResList))
+	for _, quizRes := range quizResList {
+		quizzes = append(quizzes, mapFromQuizResponse(quizRes))
 	}
-	return nil
+	return quizzes
+}
+
+func mapFromQuizResponse(quizRes *quizResponse) *Quiz {
+	return &Quiz{
+		ID:                    quizRes.ID,
+		CourseID:              quizRes.CourseID,
+		CourseModuleID:        quizRes.CourseModuleID,
+		Name:                  quizRes.Name,
+		Intro:                 quizRes.Intro,
+		IntroFormat:           quizRes.IntroFormat,
+		TimeOpen:              time.Unix(quizRes.TimeOpenUnix, 0),
+		TimeClose:             time.Unix(quizRes.TimeCloseUnix, 0),
+		TimeLimit:             quizRes.TimeLimit,
+		PreferredBehaviour:    quizRes.PreferredBehaviour,
+		Attempts:              quizRes.Attempts,
+		GradeMethod:           quizRes.GradeMethod,
+		DecimalPoints:         quizRes.DecimalPoints,
+		QuestionDecimalPoints: quizRes.QuestionDecimalPoints,
+		SumGrades:             quizRes.SumGrades,
+		Grade:                 quizRes.GradeMethod,
+		HasFeedback:           quizRes.HasFeedback,
+		Section:               quizRes.Section,
+		Visible:               quizRes.Visible,
+		GroupMode:             quizRes.GroupMode,
+		GroupingID:            quizRes.GroupingID,
+	}
+}
+
+func mapFromQuizAttemptListResponse(attemptResList []*quizAttemptResponse) []*QuizAttempt {
+	attempts := make([]*QuizAttempt, 0, len(attemptResList))
+	for _, attemptRes := range attemptResList {
+		attempts = append(attempts, mapFromQuizAttemptResponse(attemptRes))
+	}
+	return attempts
+}
+
+func mapFromQuizAttemptResponse(attemptRes *quizAttemptResponse) *QuizAttempt {
+	var timeCheckState *time.Time
+	if attemptRes.TimeCheckStateUnix != nil {
+		t := time.Unix(*attemptRes.TimeCheckStateUnix, 0)
+		timeCheckState = &t
+	}
+	return &QuizAttempt{
+		ID:                  attemptRes.ID,
+		QuizID:              attemptRes.QuizID,
+		UserID:              attemptRes.UserID,
+		Attempt:             attemptRes.Attempt,
+		UniqueID:            attemptRes.UniqueID,
+		Layout:              attemptRes.Layout,
+		CurrentPage:         attemptRes.CurrentPage,
+		Preview:             attemptRes.Preview,
+		State:               attemptRes.State,
+		TimeStart:           time.Unix(attemptRes.TimeStartUnix, 0),
+		TimeFinish:          time.Unix(attemptRes.TimeFinishUnix, 0),
+		TimeModified:        time.Unix(attemptRes.TimeModifiedUnix, 0),
+		TimeModifiedOffline: time.Unix(attemptRes.TimeModifiedOfflineUnix, 0),
+		TimeCheckState:      timeCheckState,
+		SumGrades:           attemptRes.SumGrades,
+	}
+}
+
+func mapFromQuizQuestionListResponse(quizQuestionResList []*quizQuestionResponse) []*QuizQuestion {
+	questions := make([]*QuizQuestion, 0, len(quizQuestionResList))
+	for _, questionRes := range quizQuestionResList {
+		questions = append(questions, mapFromQuizQuestionResponse(questionRes))
+	}
+	return questions
+}
+
+func mapFromQuizQuestionResponse(quizQuestionRes *quizQuestionResponse) *QuizQuestion {
+	return &QuizQuestion{
+		Slot:              quizQuestionRes.Slot,
+		Type:              quizQuestionRes.Type,
+		Page:              quizQuestionRes.Page,
+		HtmlRaw:           quizQuestionRes.Html,
+		SequenceCheck:     quizQuestionRes.SequenceCheck,
+		LastActionTime:    quizQuestionRes.LastActionTime,
+		HasAutoSavedStep:  quizQuestionRes.HasAutoSavedStep,
+		Flagged:           quizQuestionRes.Flagged,
+		Number:            quizQuestionRes.Number,
+		State:             quizQuestionRes.State,
+		Status:            quizQuestionRes.Status,
+		BlockedByPrevious: quizQuestionRes.BlockedByPrevious,
+		Mark:              quizQuestionRes.Mark,
+		MaxMark:           quizQuestionRes.MaxMark,
+	}
 }

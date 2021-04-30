@@ -2,9 +2,9 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/urlutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type CourseAPI interface {
@@ -32,42 +32,59 @@ const (
 )
 
 type Course struct {
-	ID              int    `json:"id"`
-	FullName        string `json:"fullname"`
-	ShortName       string `json:"shortname"`
-	Summary         string `json:",omitempty"`
-	SummaryFormat   int    `json:"summaryformat"`
-	StartDateUnix   int    `json:"startdate"`
-	EndDateUnix     int    `json:"enddate"`
-	Visible         bool   `json:"visible"`
-	FullNameDisplay string `json:"fullnamedisplay"`
-	ViewURL         string `json:"viewurl"`
-	CourseImage     string `json:"courseimage"`
-	Progress        int    `json:"progress"`
-	HasProgress     bool   `json:"hasprogress"`
-	IsSavourite     bool   `json:"isfavourite"`
-	Hidden          bool   `json:"hidden"`
-	ShowShortName   bool   `json:"showshortname"`
-	CourseCategory  string `json:"coursecategory"`
-}
-type GetEnrolledCoursesByTimelineClassificationResponse struct {
-	Courses    []*Course `json:"courses"`
-	NextOffset int       `json:"nextoffset"`
+	ID              int
+	FullName        string
+	ShortName       string
+	Summary         string
+	SummaryFormat   int
+	StartDate       time.Time
+	EndDate         time.Time
+	Visible         bool
+	FullNameDisplay string
+	ViewURL         string
+	CourseImage     string
+	Progress        int
+	HasProgress     bool
+	IsSavourite     bool
+	Hidden          bool
+	ShowShortName   bool
+	CourseCategory  string
 }
 
 func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error) {
-	u := urlutil.CopyWithQueries(c.apiURL, map[string]string{
-		"wsfunction":     "core_course_get_enrolled_courses_by_timeline_classification",
-		"classification": string(classification),
-	})
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	res, err := c.getEnrolledCoursesByTimelineClassification(ctx, classification)
 	if err != nil {
 		return nil, err
 	}
+	return mapFromCourseListResponse(res.Courses), nil
+}
 
-	res := GetEnrolledCoursesByTimelineClassificationResponse{}
-	if err := doAndMap(c.httpClient, req, &res); err != nil {
-		return nil, err
+func mapFromCourseListResponse(courseResList []*courseResponse) []*Course {
+	courses := make([]*Course, 0, len(courseResList))
+	for _, courseRes := range courseResList {
+		courses = append(courses, mapFromCourseResponse(courseRes))
 	}
-	return res.Courses, nil
+	return courses
+}
+
+func mapFromCourseResponse(courseRes *courseResponse) *Course {
+	return &Course{
+		ID:              courseRes.ID,
+		FullName:        courseRes.FullName,
+		ShortName:       courseRes.ShortName,
+		Summary:         courseRes.Summary,
+		SummaryFormat:   courseRes.SummaryFormat,
+		StartDate:       time.Unix(courseRes.StartDateUnix, 0),
+		EndDate:         time.Unix(courseRes.StartDateUnix, 0),
+		Visible:         courseRes.Visible,
+		FullNameDisplay: courseRes.FullName,
+		ViewURL:         courseRes.ViewURL,
+		CourseImage:     courseRes.CourseImage,
+		Progress:        courseRes.Progress,
+		HasProgress:     courseRes.HasProgress,
+		IsSavourite:     courseRes.IsSavourite,
+		Hidden:          courseRes.Hidden,
+		ShowShortName:   courseRes.ShowShortName,
+		CourseCategory:  courseRes.CourseCategory,
+	}
 }
