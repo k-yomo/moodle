@@ -109,7 +109,7 @@ func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) (*QuizAtt
 }
 
 func mapFromQuizListResponse(quizResList []*quizResponse) []*Quiz {
-	quizzes := make([]*Quiz, len(quizResList))
+	quizzes := make([]*Quiz, 0, len(quizResList))
 	for _, quizRes := range quizResList {
 		quizzes = append(quizzes, mapFromQuizResponse(quizRes))
 	}
