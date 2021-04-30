@@ -19,13 +19,12 @@ type LoginResponse struct {
 }
 
 func Login(ctx context.Context, client *http.Client, serviceURL *url.URL, params *LoginParams) (*LoginResponse, error) {
-	u := urlutil.Copy(serviceURL)
-	u.Path = path.Join(u.Path, "/login/token.php")
-	urlutil.SetQueries(u, map[string]string{
+	u := urlutil.CopyWithQueries(serviceURL, map[string]string{
 		"username": params.Username,
 		"password": params.Password,
 		"service":  "moodle_mobile_app",
 	})
+	u.Path = path.Join(u.Path, "/login/token.php")
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err

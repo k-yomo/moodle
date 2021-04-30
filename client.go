@@ -15,6 +15,7 @@ type Client struct {
 	opts       *ClientOptions
 
 	CourseAPI CourseAPI
+	QuizAPI   QuizAPI
 }
 
 // NewClient creates a new Moodle client.
@@ -57,5 +58,6 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		apiURL:     &apiURL,
 		opts:       opts,
 		CourseAPI:  newCourseAPI(opts.HttpClient, &apiURL),
+		QuizAPI:    newQuizAPI(opts.HttpClient, &apiURL),
 	}
 }

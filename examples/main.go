@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/k-yomo/moodle"
+	"github.com/k0kubun/pp"
 	"net/url"
 )
 
@@ -17,7 +17,7 @@ func main() {
 		ctx,
 		serviceURL,
 		&moodle.LoginParams{
-			Username: "S000000",
+			Username: "SXXXXXX",
 			Password: "password",
 		},
 	)
@@ -34,6 +34,13 @@ func main() {
 	}
 
 	for _, c := range courses {
-		fmt.Printf("%#v", c)
+		pp.Println(c)
+		quizzes, err := moodleClient.QuizAPI.GetQuizzesByCourse(ctx, c.ID)
+		if err != nil {
+			panic(err)
+		}
+		for _, q := range quizzes {
+			pp.Println(q)
+		}
 	}
 }

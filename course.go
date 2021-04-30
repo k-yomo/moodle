@@ -35,7 +35,6 @@ type Course struct {
 	ID              int    `json:"id"`
 	FullName        string `json:"fullname"`
 	ShortName       string `json:"shortname"`
-	IDNumber        string `json:"idnumber,omitempty"`
 	Summary         string `json:",omitempty"`
 	SummaryFormat   int    `json:"summaryformat"`
 	StartDateUnix   int    `json:"startdate"`
@@ -57,8 +56,7 @@ type GetEnrolledCoursesByTimelineClassificationResponse struct {
 }
 
 func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error) {
-	u := urlutil.Copy(c.apiURL)
-	urlutil.SetQueries(u, map[string]string{
+	u := urlutil.CopyWithQueries(c.apiURL, map[string]string{
 		"wsfunction":     "core_course_get_enrolled_courses_by_timeline_classification",
 		"classification": string(classification),
 	})

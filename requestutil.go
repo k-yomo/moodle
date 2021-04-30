@@ -43,3 +43,11 @@ func mapResponseBodyToStruct(body io.ReadCloser, to interface{}) (*APIError, err
 
 	return nil, errors.New(fmt.Sprintf("%v, body: %s", err, bodyBytes))
 }
+
+func strArrayToQueryParams(key string, strs []string) map[string]string {
+	queries := make(map[string]string)
+	for i, str := range strs {
+		queries[fmt.Sprintf("%s[%d]", key, i)] = str
+	}
+	return queries
+}

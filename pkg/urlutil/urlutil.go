@@ -14,3 +14,9 @@ func SetQueries(u *url.URL, queries map[string]string) {
 	}
 	u.RawQuery = q.Encode()
 }
+
+func CopyWithQueries(original *url.URL, queries map[string]string) *url.URL {
+	u := Copy(original)
+	SetQueries(u, queries)
+	return u
+}
