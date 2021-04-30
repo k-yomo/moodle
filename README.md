@@ -1,8 +1,9 @@
 # moodle
+
 Go Moodle API Client
 
-
 ## Example
+
 ```go
 package main
 
@@ -20,21 +21,21 @@ func main() {
 		panic(err)
 	}
 	moodleClient, err := moodle.NewClientWithLogin(
-		ctx, 
-		serviceURL, 
+		ctx,
+		serviceURL,
 		&moodle.LoginParams{
-            Username: "S000000",
-            Password: "password",
-        },
+			Username: "S000000",
+			Password: "password",
+		},
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	courses, err := moodleClient.CourseAPI.GetEnrolledCoursesByTimelineClassification(
-		ctx, 
+		ctx,
 		moodle.CourseClassificationInProgress,
-    )
+	)
 	if err != nil {
 		panic(err)
 	}
