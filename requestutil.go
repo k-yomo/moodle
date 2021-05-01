@@ -2,7 +2,6 @@ package moodle
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,32 +15,28 @@ func doAndMap(client *http.Client, req *http.Request, to interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	apiError, err := mapResponseBodyToStruct(resp.Body, to)
-	if apiError != nil {
-		return apiError
-	} else if err != nil {
+	if err := mapResponseBodyToStruct(resp.Body, to); err != nil {
 		return err
 	}
 	return nil
 }
 
-func mapResponseBodyToStruct(body io.ReadCloser, to interface{}) (*APIError, error) {
+func mapResponseBodyToStruct(body io.ReadCloser, to interface{}) error {
 	bodyBytes, err := ioutil.ReadAll(body)
 	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(bodyBytes, to)
-	if err == nil {
-		return nil, nil
+		return err
 	}
 
 	apiError := APIError{}
 	if err := json.Unmarshal(bodyBytes, &apiError); err == nil && apiError.ErrorCode != "" {
-		return &apiError, nil
+		return &apiError
 	}
 
-	return nil, errors.New(fmt.Sprintf("%v, body: %s", err, bodyBytes))
+	if err := json.Unmarshal(bodyBytes, to); err != nil {
+		return fmt.Errorf("%v, body: %s", err, bodyBytes)
+	}
+
+	return nil
 }
 
 func strArrayToQueryParams(key string, strs []string) map[string]string {

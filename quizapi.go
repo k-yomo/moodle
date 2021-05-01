@@ -51,20 +51,20 @@ type quizAttemptResponse struct {
 }
 
 type quizQuestionResponse struct {
-	Slot              int    `json:"slot"`
-	Type              string `json:"type"`
-	Page              int    `json:"page"`
-	Html              string `json:"html"`
-	SequenceCheck     int    `json:"sequencecheck"`
-	LastActionTime    int    `json:"lastactiontime"`
-	HasAutoSavedStep  bool   `json:"hasautosavedstep"`
-	Flagged           bool   `json:"flagged"`
-	Number            int    `json:"number"`
-	State             string `json:"state"`
-	Status            string `json:"status"`
-	BlockedByPrevious bool   `json:"blockedbyprevious"`
-	Mark              string `json:"mark"`
-	MaxMark           int    `json:"maxmark"`
+	Slot               int    `json:"slot"`
+	Type               string `json:"type"`
+	Page               int    `json:"page"`
+	Html               string `json:"html"`
+	SequenceCheck      int    `json:"sequencecheck"`
+	LastActionTimeUnix int64  `json:"lastactiontime"`
+	HasAutoSavedStep   bool   `json:"hasautosavedstep"`
+	Flagged            bool   `json:"flagged"`
+	Number             int    `json:"number"`
+	State              string `json:"state"`
+	Status             string `json:"status"`
+	BlockedByPrevious  bool   `json:"blockedbyprevious"`
+	Mark               string `json:"mark"`
+	MaxMark            int    `json:"maxmark"`
 }
 
 type getQuizzesByCourseResponse struct {
