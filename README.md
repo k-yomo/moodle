@@ -1,5 +1,10 @@
 # moodle
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+![Tests Workflow](https://github.com/k-yomo/moodle/workflows/Tests/badge.svg)
+[![codecov](https://codecov.io/gh/k-yomo/moodle/branch/main/graph/badge.svg)](https://codecov.io/gh/k-yomo/moodle)
+[![Go Report Card](https://goreportcard.com/badge/k-yomo/moodle)](https://goreportcard.com/report/k-yomo/moodle)
+
 Go Moodle API Client
 
 ## Example
