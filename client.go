@@ -28,7 +28,7 @@ func NewClient(ctx context.Context, serviceURL *url.URL, token string, opt ...Cl
 func NewClientWithLogin(ctx context.Context, serviceURL *url.URL, loginParams *LoginParams, opt ...ClientOption) (*Client, error) {
 	resp, err := Login(
 		ctx,
-		&http.Client{},
+		http.DefaultClient,
 		serviceURL,
 		loginParams,
 	)

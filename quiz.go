@@ -55,7 +55,7 @@ type QuizQuestion struct {
 	Page              int
 	HtmlRaw           string
 	SequenceCheck     int
-	LastActionTime    int
+	LastActionTime    time.Time
 	HasAutoSavedStep  bool
 	Flagged           bool
 	Number            int
@@ -190,7 +190,7 @@ func mapFromQuizQuestionResponse(quizQuestionRes *quizQuestionResponse) *QuizQue
 		Page:              quizQuestionRes.Page,
 		HtmlRaw:           quizQuestionRes.Html,
 		SequenceCheck:     quizQuestionRes.SequenceCheck,
-		LastActionTime:    quizQuestionRes.LastActionTime,
+		LastActionTime:    time.Unix(quizQuestionRes.LastActionTimeUnix, 0),
 		HasAutoSavedStep:  quizQuestionRes.HasAutoSavedStep,
 		Flagged:           quizQuestionRes.Flagged,
 		Number:            quizQuestionRes.Number,

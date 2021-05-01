@@ -9,7 +9,7 @@ type ClientOptions struct {
 
 func newDefaultClientOptions() *ClientOptions {
 	return &ClientOptions{
-		HttpClient: &http.Client{},
+		HttpClient: http.DefaultClient,
 	}
 }
 
