@@ -37,7 +37,7 @@ func mapResponseBodyToStruct(body io.ReadCloser, to interface{}) (*APIError, err
 	}
 
 	apiError := APIError{}
-	if err := json.Unmarshal(bodyBytes, &apiError); err == nil {
+	if err := json.Unmarshal(bodyBytes, &apiError); err == nil && apiError.ErrorCode != "" {
 		return &apiError, nil
 	}
 
