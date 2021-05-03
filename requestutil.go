@@ -53,3 +53,11 @@ func strArrayToQueryParams(key string, strs []string) map[string]string {
 	}
 	return queries
 }
+
+// moodle takes bool as 1(true) or 0(false)
+func mapBoolToBitStr(b bool) string {
+	if b {
+		return "1"
+	}
+	return "0"
+}

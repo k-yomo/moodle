@@ -42,7 +42,7 @@ type QuizAttempt struct {
 	Preview             int
 	State               string
 	TimeStart           time.Time
-	TimeFinish          time.Time
+	TimeFinish          *time.Time
 	TimeModified        time.Time
 	TimeModifiedOffline time.Time
 	TimeCheckState      *time.Time
@@ -70,6 +70,8 @@ type QuizAPI interface {
 	GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error)
 	GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttempt, error)
 	GetAttemptReview(ctx context.Context, attemptID int) (*QuizAttempt, []*QuizQuestion, error)
+	StartAttempt(ctx context.Context, quizID int) (*QuizAttempt, error)
+	FinishAttempt(ctx context.Context, attemptID int, timeUp bool) error
 }
 
 type quizAPI struct {
@@ -106,6 +108,28 @@ func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) (*QuizAtt
 		return nil, nil, err
 	}
 	return mapFromQuizAttemptResponse(res.Attempt), mapFromQuizQuestionListResponse(res.Questions), nil
+}
+
+func (q *quizAPI) StartAttempt(ctx context.Context, quizID int) (*QuizAttempt, error) {
+	res, err := q.startAttempt(ctx, quizID)
+	if err != nil {
+		return nil, err
+	}
+	if len(res.Warnings) > 0 {
+		return nil, res.Warnings
+	}
+	return mapFromQuizAttemptResponse(res.Attempt), err
+}
+
+func (q *quizAPI) FinishAttempt(ctx context.Context, attemptID int, timeUp bool) error {
+	res, err := q.processAttempt(ctx, attemptID, true, timeUp)
+	if err != nil {
+		return err
+	}
+	if len(res.Warnings) > 0 {
+		return res.Warnings
+	}
+	return nil
 }
 
 func mapFromQuizListResponse(quizResList []*quizResponse) []*Quiz {
@@ -151,7 +175,11 @@ func mapFromQuizAttemptListResponse(attemptResList []*quizAttemptResponse) []*Qu
 }
 
 func mapFromQuizAttemptResponse(attemptRes *quizAttemptResponse) *QuizAttempt {
-	var timeCheckState *time.Time
+	var timeFinish, timeCheckState *time.Time
+	if attemptRes.TimeFinishUnix > 0 {
+		t := time.Unix(attemptRes.TimeFinishUnix, 0)
+		timeFinish = &t
+	}
 	if attemptRes.TimeCheckStateUnix != nil {
 		t := time.Unix(*attemptRes.TimeCheckStateUnix, 0)
 		timeCheckState = &t
@@ -167,7 +195,7 @@ func mapFromQuizAttemptResponse(attemptRes *quizAttemptResponse) *QuizAttempt {
 		Preview:             attemptRes.Preview,
 		State:               attemptRes.State,
 		TimeStart:           time.Unix(attemptRes.TimeStartUnix, 0),
-		TimeFinish:          time.Unix(attemptRes.TimeFinishUnix, 0),
+		TimeFinish:          timeFinish,
 		TimeModified:        time.Unix(attemptRes.TimeModifiedUnix, 0),
 		TimeModifiedOffline: time.Unix(attemptRes.TimeModifiedOfflineUnix, 0),
 		TimeCheckState:      timeCheckState,

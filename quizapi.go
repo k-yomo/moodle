@@ -127,3 +127,47 @@ func (q *quizAPI) getAttemptReview(ctx context.Context, attemptID int) (*getAtte
 	}
 	return &res, nil
 }
+
+type startAttemptResponse struct {
+	Attempt  *quizAttemptResponse `json:"attempt,omitempty"`
+	Warnings Warnings     `json:"warnings,omitempty"`
+}
+
+func (q *quizAPI) startAttempt(ctx context.Context, quizID int) (*startAttemptResponse, error) {
+	u := urlutil.CopyWithQueries(
+		q.apiURL,
+		map[string]string{
+			"wsfunction": "mod_quiz_start_attempt",
+			"quizid":     strconv.Itoa(quizID),
+		},
+	)
+
+	res := startAttemptResponse{}
+	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type finishAttemptResponse struct {
+	State    string   `json:"state,omitempty"`
+	Warnings Warnings `json:"warnings,omitempty"`
+}
+
+func (q *quizAPI) processAttempt(ctx context.Context, quizID int, finishAttempt bool, timeUp bool) (*finishAttemptResponse, error) {
+	u := urlutil.CopyWithQueries(
+		q.apiURL,
+		map[string]string{
+			"wsfunction":    "mod_quiz_process_attempt",
+			"attemptid":     strconv.Itoa(quizID),
+			"finishattempt": mapBoolToBitStr(finishAttempt),
+			"timeup":        mapBoolToBitStr(timeUp),
+		},
+	)
+
+	res := finishAttemptResponse{}
+	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}

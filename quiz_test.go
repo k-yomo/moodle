@@ -153,7 +153,7 @@ func Test_quizAPI_GetUserAttempts(t *testing.T) {
 					UniqueID:            123456,
 					State:               "finished",
 					TimeStart:           time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-					TimeFinish:          time.Date(2020, 1, 1, 0, 5, 0, 0, time.UTC),
+					TimeFinish:          func() *time.Time { t := time.Date(2020, 1, 1, 0, 5, 0, 0, time.UTC); return &t }(),
 					TimeModified:        time.Date(2020, 1, 1, 0, 10, 0, 0, time.UTC),
 					TimeModifiedOffline: time.Date(2020, 1, 1, 0, 15, 0, 0, time.UTC),
 					TimeCheckState:      nil,
@@ -256,7 +256,7 @@ func Test_quizAPI_GetAttemptReview(t *testing.T) {
 				UniqueID:            123456,
 				State:               "finished",
 				TimeStart:           time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
-				TimeFinish:          time.Date(2020, 1, 1, 0, 5, 0, 0, time.UTC),
+				TimeFinish:          func() *time.Time { t := time.Date(2020, 1, 1, 0, 5, 0, 0, time.UTC); return &t }(),
 				TimeModified:        time.Date(2020, 1, 1, 0, 10, 0, 0, time.UTC),
 				TimeModifiedOffline: time.Date(2020, 1, 1, 0, 15, 0, 0, time.UTC),
 				TimeCheckState:      nil,
@@ -304,6 +304,143 @@ func Test_quizAPI_GetAttemptReview(t *testing.T) {
 			}
 			if diff := cmp.Diff(got1, tt.want1); diff != "" {
 				t.Errorf("GetAttemptReview() (-got1, +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_quizAPI_StartAttempt(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		quizID int
+	}
+	tests := []struct {
+		name     string
+		args     args
+		response string
+		want     *QuizAttempt
+		wantErr  bool
+	}{
+		{
+			name: "Successful response",
+			args: args{ctx: context.Background(), quizID: 1111},
+			response: `{
+  "attempt": {
+    "id": 2222,
+    "quiz": 1111,
+    "userid": 3333,
+    "attempt": 1,
+    "uniqueid": 123456,
+    "layout": "1,2,3,4,5,0",
+    "currentpage": 0,
+    "preview": 0,
+    "state": "inprogress",
+    "timestart": 1577836800,
+    "timefinish": 0,
+    "timemodified": 1577836800,
+    "timemodifiedoffline": 1577836800,
+    "timecheckstate": null,
+    "sumgrades": 0
+  },
+  "warnings": []
+}`,
+			want: &QuizAttempt{
+				ID:                  2222,
+				QuizID:              1111,
+				UserID:              3333,
+				Attempt:             1,
+				UniqueID:            123456,
+				State:               "inprogress",
+				TimeStart:           time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				TimeFinish:          nil,
+				TimeModified:        time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				TimeModifiedOffline: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+				TimeCheckState:      nil,
+				SumGrades:           0,
+			},
+		},
+		{
+			name:     "Warning response",
+			args:     args{ctx: context.Background(), quizID: 1111},
+			response: `{"attempt":{},"warnings":[{"item":"quiz","itemid":1111,"warningcode":"1","message":"This quiz is not currently available"}]}`,
+			wantErr:  true,
+		},
+		{
+			name:     "Error response",
+			args:     args{ctx: context.Background(), quizID: 0000},
+			response: `{"exception":"dml_missing_record_exception","errorcode":"invalidrecord","message":"Can't find data record in database table quiz."}`,
+			wantErr:  true,
+		},
+		{
+			name:     "Invalid json response",
+			args:     args{ctx: context.Background(), quizID: 0000},
+			response: "{",
+			wantErr:  true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			q := mockQuizAPI(t, tt.response)
+			got, err := q.StartAttempt(tt.args.ctx, tt.args.quizID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("StartAttempt() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("StartAttempt() (-got, +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_quizAPI_FinishAttempt(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		attemptID int
+		timeUp    bool
+	}
+	tests := []struct {
+		name     string
+		args     args
+		response string
+		wantErr  bool
+	}{
+		{
+			name:     "Successful response",
+			args:     args{ctx: context.Background(), attemptID: 1111, timeUp: false},
+			response: `{"state":"finished","warnings":[]}`,
+			wantErr:  false,
+		},
+		{
+			name:     "Warning response",
+			args:     args{ctx: context.Background(), attemptID: 1111, timeUp: false},
+			response: `{"state":"inprogress","warnings":[{"item":"quiz","itemid":1111,"warningcode":"1","message":"Test message"}]}`,
+			wantErr:  true,
+		},
+		{
+			name:     "Error response",
+			args:     args{ctx: context.Background(), attemptID: 0000},
+			response: `{"exception":"moodle_quiz_exception","errorcode":"attemptalreadyclosed","message":"This attempt has already been finished."}`,
+			wantErr:  true,
+		},
+		{
+			name:     "Invalid json response",
+			args:     args{ctx: context.Background(), attemptID: 0000},
+			response: "{",
+			wantErr:  true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			q := mockQuizAPI(t, tt.response)
+			if err := q.FinishAttempt(tt.args.ctx, tt.args.attemptID, tt.args.timeUp); (err != nil) != tt.wantErr {
+				t.Errorf("FinishAttempt() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
