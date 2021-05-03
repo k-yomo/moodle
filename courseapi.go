@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-
 type CourseAPI interface {
 	GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error)
 }
@@ -62,7 +61,6 @@ func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Conte
 
 	return mapFromCourseListResponse(res.Courses), nil
 }
-
 
 func mapFromCourseListResponse(courseResList []*courseResponse) []*Course {
 	courses := make([]*Course, 0, len(courseResList))

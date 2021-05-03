@@ -15,14 +15,12 @@ type AuthAPI interface {
 type authAPI struct {
 	httpClient *http.Client
 	serviceURL *url.URL
-	apiURL     *url.URL
 }
 
-func newAuthAPI(httpClient *http.Client, serviceURL, apiURL *url.URL) *authAPI {
+func newAuthAPI(httpClient *http.Client, serviceURL *url.URL) *authAPI {
 	return &authAPI{
 		httpClient: httpClient,
 		serviceURL: serviceURL,
-		apiURL:     apiURL,
 	}
 }
 

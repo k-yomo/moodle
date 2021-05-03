@@ -27,7 +27,7 @@ func NewClient(ctx context.Context, serviceURL *url.URL, token string, opt ...Cl
 
 // NewClientWithLogin creates a new Moodle client with token retrieved from login request.
 func NewClientWithLogin(ctx context.Context, serviceURL *url.URL, username, password string, opt ...ClientOption) (*Client, error) {
-	res, err := newAuthAPI(http.DefaultClient, serviceURL, nil).Login(ctx, username, password)
+	res, err := newAuthAPI(http.DefaultClient, serviceURL).Login(ctx, username, password)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,6 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		apiURL:     &apiURL,
 		opts:       opts,
 
-		AuthAPI:   newAuthAPI(opts.HttpClient, serviceURL, &apiURL),
 		CourseAPI: newCourseAPI(opts.HttpClient, &apiURL),
 		QuizAPI:   newQuizAPI(opts.HttpClient, &apiURL),
 	}
