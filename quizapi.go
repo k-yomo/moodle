@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/k-yomo/moodle/pkg/maputil"
 	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
 	"strconv"
 )
 
@@ -80,13 +79,8 @@ func (q *quizAPI) getQuizzesByCourse(ctx context.Context, courseID int) (*getQui
 		),
 	)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	res := getQuizzesByCourseResponse{}
-	if err := doAndMap(q.httpClient, req, &res); err != nil {
+	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -105,13 +99,8 @@ func (q *quizAPI) getUserAttempts(ctx context.Context, quizID int) (*getUserAtte
 		},
 	)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	res := getUserAttemptsResponse{}
-	if err := doAndMap(q.httpClient, req, &res); err != nil {
+	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -132,13 +121,8 @@ func (q *quizAPI) getAttemptReview(ctx context.Context, attemptID int) (*getAtte
 		},
 	)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	res := getAttemptReviewResponse{}
-	if err := doAndMap(q.httpClient, req, &res); err != nil {
+	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil

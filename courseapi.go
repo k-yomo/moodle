@@ -3,7 +3,6 @@ package moodle
 import (
 	"context"
 	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
 )
 
 type courseResponse struct {
@@ -36,13 +35,8 @@ func (c *courseAPI) getEnrolledCoursesByTimelineClassification(ctx context.Conte
 		"wsfunction":     "core_course_get_enrolled_courses_by_timeline_classification",
 		"classification": string(classification),
 	})
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	res := getEnrolledCoursesByTimelineClassificationResponse{}
-	if err := doAndMap(c.httpClient, req, &res); err != nil {
+	if err := getAndUnmarshal(ctx, c.httpClient, u, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil

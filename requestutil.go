@@ -1,14 +1,21 @@
 package moodle
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
-func doAndMap(client *http.Client, req *http.Request, to interface{}) error {
+func getAndUnmarshal(ctx context.Context, client *http.Client, u *url.URL, to interface{}) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	if err != nil {
+		return err
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

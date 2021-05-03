@@ -25,13 +25,8 @@ func Login(ctx context.Context, client *http.Client, serviceURL *url.URL, params
 		"service":  "moodle_mobile_app",
 	})
 	u.Path = path.Join(u.Path, "/login/token.php")
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	res := LoginResponse{}
-	if err := doAndMap(client, req, &res); err != nil {
+	if err := getAndUnmarshal(ctx, client, u, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
