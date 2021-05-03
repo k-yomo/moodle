@@ -39,7 +39,7 @@ func TestNewClientWithLogin(t *testing.T) {
 	s := httptest.NewServer(h)
 	serviceURL, _ := url.Parse(s.URL)
 
-	got, err := NewClientWithLogin(context.Background(), serviceURL, &LoginParams{})
+	got, err := NewClientWithLogin(context.Background(), serviceURL, "", "")
 	if err != nil {
 		t.Fatalf("NewClientWithLogin() error = %v", err)
 	}

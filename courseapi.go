@@ -3,7 +3,27 @@ package moodle
 import (
 	"context"
 	"github.com/k-yomo/moodle/pkg/urlutil"
+	"net/http"
+	"net/url"
+	"time"
 )
+
+
+type CourseAPI interface {
+	GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error)
+}
+
+type courseAPI struct {
+	httpClient *http.Client
+	apiURL     *url.URL
+}
+
+func newCourseAPI(httpClient *http.Client, apiURL *url.URL) *courseAPI {
+	return &courseAPI{
+		httpClient: httpClient,
+		apiURL:     apiURL,
+	}
+}
 
 type courseResponse struct {
 	ID              int    `json:"id"`
@@ -30,7 +50,7 @@ type getEnrolledCoursesByTimelineClassificationResponse struct {
 	NextOffset int               `json:"nextoffset"`
 }
 
-func (c *courseAPI) getEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) (*getEnrolledCoursesByTimelineClassificationResponse, error) {
+func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error) {
 	u := urlutil.CopyWithQueries(c.apiURL, map[string]string{
 		"wsfunction":     "core_course_get_enrolled_courses_by_timeline_classification",
 		"classification": string(classification),
@@ -39,5 +59,37 @@ func (c *courseAPI) getEnrolledCoursesByTimelineClassification(ctx context.Conte
 	if err := getAndUnmarshal(ctx, c.httpClient, u, &res); err != nil {
 		return nil, err
 	}
-	return &res, nil
+
+	return mapFromCourseListResponse(res.Courses), nil
+}
+
+
+func mapFromCourseListResponse(courseResList []*courseResponse) []*Course {
+	courses := make([]*Course, 0, len(courseResList))
+	for _, courseRes := range courseResList {
+		courses = append(courses, mapFromCourseResponse(courseRes))
+	}
+	return courses
+}
+
+func mapFromCourseResponse(courseRes *courseResponse) *Course {
+	return &Course{
+		ID:              courseRes.ID,
+		FullName:        courseRes.FullName,
+		ShortName:       courseRes.ShortName,
+		Summary:         courseRes.Summary,
+		SummaryFormat:   courseRes.SummaryFormat,
+		StartDate:       time.Unix(courseRes.StartDateUnix, 0),
+		EndDate:         time.Unix(courseRes.StartDateUnix, 0),
+		Visible:         courseRes.Visible,
+		FullNameDisplay: courseRes.FullName,
+		ViewURL:         courseRes.ViewURL,
+		CourseImage:     courseRes.CourseImage,
+		Progress:        courseRes.Progress,
+		HasProgress:     courseRes.HasProgress,
+		IsSavourite:     courseRes.IsSavourite,
+		Hidden:          courseRes.Hidden,
+		ShowShortName:   courseRes.ShowShortName,
+		CourseCategory:  courseRes.CourseCategory,
+	}
 }

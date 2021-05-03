@@ -14,6 +14,7 @@ type Client struct {
 	apiURL     *url.URL
 	opts       *ClientOptions
 
+	AuthAPI   AuthAPI
 	CourseAPI CourseAPI
 	QuizAPI   QuizAPI
 }
@@ -25,18 +26,13 @@ func NewClient(ctx context.Context, serviceURL *url.URL, token string, opt ...Cl
 }
 
 // NewClientWithLogin creates a new Moodle client with token retrieved from login request.
-func NewClientWithLogin(ctx context.Context, serviceURL *url.URL, loginParams *LoginParams, opt ...ClientOption) (*Client, error) {
-	resp, err := Login(
-		ctx,
-		http.DefaultClient,
-		serviceURL,
-		loginParams,
-	)
+func NewClientWithLogin(ctx context.Context, serviceURL *url.URL, username, password string, opt ...ClientOption) (*Client, error) {
+	res, err := newAuthAPI(http.DefaultClient, serviceURL, nil).Login(ctx, username, password)
 	if err != nil {
 		return nil, err
 	}
 
-	c := newClient(serviceURL, append(opt, withToken(resp.Token))...)
+	c := newClient(serviceURL, append(opt, withToken(res.Token))...)
 	return c, nil
 }
 
@@ -57,7 +53,9 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		serviceURL: serviceURL,
 		apiURL:     &apiURL,
 		opts:       opts,
-		CourseAPI:  newCourseAPI(opts.HttpClient, &apiURL),
-		QuizAPI:    newQuizAPI(opts.HttpClient, &apiURL),
+
+		AuthAPI:   newAuthAPI(opts.HttpClient, serviceURL, &apiURL),
+		CourseAPI: newCourseAPI(opts.HttpClient, &apiURL),
+		QuizAPI:   newQuizAPI(opts.HttpClient, &apiURL),
 	}
 }

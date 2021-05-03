@@ -4,8 +4,31 @@ import (
 	"context"
 	"github.com/k-yomo/moodle/pkg/maputil"
 	"github.com/k-yomo/moodle/pkg/urlutil"
+	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 )
+
+type QuizAPI interface {
+	GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error)
+	GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttempt, error)
+	GetAttemptReview(ctx context.Context, attemptID int) (*QuizAttempt, []*QuizQuestion, error)
+	StartAttempt(ctx context.Context, quizID int) (*QuizAttempt, error)
+	FinishAttempt(ctx context.Context, attemptID int, timeUp bool) error
+}
+
+type quizAPI struct {
+	httpClient *http.Client
+	apiURL     *url.URL
+}
+
+func newQuizAPI(httpClient *http.Client, apiURL *url.URL) *quizAPI {
+	return &quizAPI{
+		httpClient: httpClient,
+		apiURL:     apiURL,
+	}
+}
 
 type quizResponse struct {
 	ID                    int    `json:"id"`
@@ -70,7 +93,7 @@ type getQuizzesByCourseResponse struct {
 	Quizzes []*quizResponse `json:"quizzes"`
 }
 
-func (q *quizAPI) getQuizzesByCourse(ctx context.Context, courseID int) (*getQuizzesByCourseResponse, error) {
+func (q *quizAPI) GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error) {
 	u := urlutil.CopyWithQueries(
 		q.apiURL,
 		maputil.MergeStrMap(
@@ -83,14 +106,14 @@ func (q *quizAPI) getQuizzesByCourse(ctx context.Context, courseID int) (*getQui
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
-	return &res, nil
+	return mapFromQuizListResponse(res.Quizzes), nil
 }
 
 type getUserAttemptsResponse struct {
 	Attempts []*quizAttemptResponse `json:"attempts"`
 }
 
-func (q *quizAPI) getUserAttempts(ctx context.Context, quizID int) (*getUserAttemptsResponse, error) {
+func (q *quizAPI) GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttempt, error) {
 	u := urlutil.CopyWithQueries(
 		q.apiURL,
 		map[string]string{
@@ -103,7 +126,7 @@ func (q *quizAPI) getUserAttempts(ctx context.Context, quizID int) (*getUserAtte
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
-	return &res, nil
+	return mapFromQuizAttemptListResponse(res.Attempts), nil
 }
 
 type getAttemptReviewResponse struct {
@@ -112,7 +135,7 @@ type getAttemptReviewResponse struct {
 	Questions []*quizQuestionResponse `json:"questions"`
 }
 
-func (q *quizAPI) getAttemptReview(ctx context.Context, attemptID int) (*getAttemptReviewResponse, error) {
+func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) (*QuizAttempt, []*QuizQuestion, error) {
 	u := urlutil.CopyWithQueries(
 		q.apiURL,
 		map[string]string{
@@ -123,9 +146,9 @@ func (q *quizAPI) getAttemptReview(ctx context.Context, attemptID int) (*getAtte
 
 	res := getAttemptReviewResponse{}
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &res, nil
+	return mapFromQuizAttemptResponse(res.Attempt), mapFromQuizQuestionListResponse(res.Questions), nil
 }
 
 type startAttemptResponse struct {
@@ -133,7 +156,7 @@ type startAttemptResponse struct {
 	Warnings Warnings             `json:"warnings,omitempty"`
 }
 
-func (q *quizAPI) startAttempt(ctx context.Context, quizID int) (*startAttemptResponse, error) {
+func (q *quizAPI) StartAttempt(ctx context.Context, quizID int) (*QuizAttempt, error) {
 	u := urlutil.CopyWithQueries(
 		q.apiURL,
 		map[string]string{
@@ -146,7 +169,11 @@ func (q *quizAPI) startAttempt(ctx context.Context, quizID int) (*startAttemptRe
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
-	return &res, nil
+
+	if len(res.Warnings) > 0 {
+		return nil, res.Warnings
+	}
+	return mapFromQuizAttemptResponse(res.Attempt), nil
 }
 
 type finishAttemptResponse struct {
@@ -154,20 +181,121 @@ type finishAttemptResponse struct {
 	Warnings Warnings `json:"warnings,omitempty"`
 }
 
-func (q *quizAPI) processAttempt(ctx context.Context, quizID int, finishAttempt bool, timeUp bool) (*finishAttemptResponse, error) {
+func (q *quizAPI) FinishAttempt(ctx context.Context, attemptID int, timeUp bool) error {
 	u := urlutil.CopyWithQueries(
 		q.apiURL,
 		map[string]string{
 			"wsfunction":    "mod_quiz_process_attempt",
-			"attemptid":     strconv.Itoa(quizID),
-			"finishattempt": mapBoolToBitStr(finishAttempt),
+			"attemptid":     strconv.Itoa(attemptID),
+			"finishattempt": "1",
 			"timeup":        mapBoolToBitStr(timeUp),
 		},
 	)
 
 	res := finishAttemptResponse{}
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
-		return nil, err
+		return err
 	}
-	return &res, nil
+	if len(res.Warnings) > 0 {
+		return res.Warnings
+	}
+	return nil
+}
+
+func mapFromQuizListResponse(quizResList []*quizResponse) []*Quiz {
+	quizzes := make([]*Quiz, 0, len(quizResList))
+	for _, quizRes := range quizResList {
+		quizzes = append(quizzes, mapFromQuizResponse(quizRes))
+	}
+	return quizzes
+}
+
+func mapFromQuizResponse(quizRes *quizResponse) *Quiz {
+	return &Quiz{
+		ID:                    quizRes.ID,
+		CourseID:              quizRes.CourseID,
+		CourseModuleID:        quizRes.CourseModuleID,
+		Name:                  quizRes.Name,
+		Intro:                 quizRes.Intro,
+		IntroFormat:           quizRes.IntroFormat,
+		TimeOpen:              time.Unix(quizRes.TimeOpenUnix, 0),
+		TimeClose:             time.Unix(quizRes.TimeCloseUnix, 0),
+		TimeLimit:             quizRes.TimeLimit,
+		PreferredBehaviour:    quizRes.PreferredBehaviour,
+		Attempts:              quizRes.Attempts,
+		GradeMethod:           quizRes.GradeMethod,
+		DecimalPoints:         quizRes.DecimalPoints,
+		QuestionDecimalPoints: quizRes.QuestionDecimalPoints,
+		SumGrades:             quizRes.SumGrades,
+		Grade:                 quizRes.GradeMethod,
+		HasFeedback:           quizRes.HasFeedback,
+		Section:               quizRes.Section,
+		Visible:               quizRes.Visible,
+		GroupMode:             quizRes.GroupMode,
+		GroupingID:            quizRes.GroupingID,
+	}
+}
+
+func mapFromQuizAttemptListResponse(attemptResList []*quizAttemptResponse) []*QuizAttempt {
+	attempts := make([]*QuizAttempt, 0, len(attemptResList))
+	for _, attemptRes := range attemptResList {
+		attempts = append(attempts, mapFromQuizAttemptResponse(attemptRes))
+	}
+	return attempts
+}
+
+func mapFromQuizAttemptResponse(attemptRes *quizAttemptResponse) *QuizAttempt {
+	var timeFinish, timeCheckState *time.Time
+	if attemptRes.TimeFinishUnix > 0 {
+		t := time.Unix(attemptRes.TimeFinishUnix, 0)
+		timeFinish = &t
+	}
+	if attemptRes.TimeCheckStateUnix != nil {
+		t := time.Unix(*attemptRes.TimeCheckStateUnix, 0)
+		timeCheckState = &t
+	}
+	return &QuizAttempt{
+		ID:                  attemptRes.ID,
+		QuizID:              attemptRes.QuizID,
+		UserID:              attemptRes.UserID,
+		Attempt:             attemptRes.Attempt,
+		UniqueID:            attemptRes.UniqueID,
+		Layout:              attemptRes.Layout,
+		CurrentPage:         attemptRes.CurrentPage,
+		Preview:             attemptRes.Preview,
+		State:               attemptRes.State,
+		TimeStart:           time.Unix(attemptRes.TimeStartUnix, 0),
+		TimeFinish:          timeFinish,
+		TimeModified:        time.Unix(attemptRes.TimeModifiedUnix, 0),
+		TimeModifiedOffline: time.Unix(attemptRes.TimeModifiedOfflineUnix, 0),
+		TimeCheckState:      timeCheckState,
+		SumGrades:           attemptRes.SumGrades,
+	}
+}
+
+func mapFromQuizQuestionListResponse(quizQuestionResList []*quizQuestionResponse) []*QuizQuestion {
+	questions := make([]*QuizQuestion, 0, len(quizQuestionResList))
+	for _, questionRes := range quizQuestionResList {
+		questions = append(questions, mapFromQuizQuestionResponse(questionRes))
+	}
+	return questions
+}
+
+func mapFromQuizQuestionResponse(quizQuestionRes *quizQuestionResponse) *QuizQuestion {
+	return &QuizQuestion{
+		Slot:              quizQuestionRes.Slot,
+		Type:              quizQuestionRes.Type,
+		Page:              quizQuestionRes.Page,
+		HtmlRaw:           quizQuestionRes.Html,
+		SequenceCheck:     quizQuestionRes.SequenceCheck,
+		LastActionTime:    time.Unix(quizQuestionRes.LastActionTimeUnix, 0),
+		HasAutoSavedStep:  quizQuestionRes.HasAutoSavedStep,
+		Flagged:           quizQuestionRes.Flagged,
+		Number:            quizQuestionRes.Number,
+		State:             quizQuestionRes.State,
+		Status:            quizQuestionRes.Status,
+		BlockedByPrevious: quizQuestionRes.BlockedByPrevious,
+		Mark:              quizQuestionRes.Mark,
+		MaxMark:           quizQuestionRes.MaxMark,
+	}
 }

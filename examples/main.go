@@ -16,10 +16,8 @@ func main() {
 	moodleClient, err := moodle.NewClientWithLogin(
 		ctx,
 		serviceURL,
-		&moodle.LoginParams{
-			Username: "SXXXXXX",
-			Password: "password",
-		},
+		"SXXXXXX",
+		"password",
 	)
 	if err != nil {
 		panic(err)
