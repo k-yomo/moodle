@@ -130,7 +130,7 @@ func (q *quizAPI) getAttemptReview(ctx context.Context, attemptID int) (*getAtte
 
 type startAttemptResponse struct {
 	Attempt  *quizAttemptResponse `json:"attempt,omitempty"`
-	Warnings Warnings     `json:"warnings,omitempty"`
+	Warnings Warnings             `json:"warnings,omitempty"`
 }
 
 func (q *quizAPI) startAttempt(ctx context.Context, quizID int) (*startAttemptResponse, error) {
