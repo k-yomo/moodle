@@ -28,12 +28,19 @@ func main() {
 	moodleClient, err := moodle.NewClientWithLogin(
 		ctx,
 		serviceURL,
-		"S000000",
+		"SXXXXXX",
 		"password",
 	)
 	if err != nil {
 		panic(err)
 	}
+
+	siteInfo, err := moodleClient.UserAPI.GetSiteInfo(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%#v\n", siteInfo)
 
 	courses, err := moodleClient.CourseAPI.GetEnrolledCoursesByTimelineClassification(
 		ctx,
@@ -44,7 +51,7 @@ func main() {
 	}
 
 	for _, c := range courses {
-		fmt.Printf("%#v", c)
+		fmt.Printf("%#v\n", c)
 	}
 }
 ```

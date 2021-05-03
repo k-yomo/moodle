@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/k-yomo/moodle"
-	"github.com/k0kubun/pp"
 	"net/url"
 )
 
@@ -23,6 +23,13 @@ func main() {
 		panic(err)
 	}
 
+	siteInfo, err := moodleClient.UserAPI.GetSiteInfo(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%#v\n", siteInfo)
+
 	courses, err := moodleClient.CourseAPI.GetEnrolledCoursesByTimelineClassification(
 		ctx,
 		moodle.CourseClassificationInProgress,
@@ -32,13 +39,6 @@ func main() {
 	}
 
 	for _, c := range courses {
-		pp.Println(c)
-		quizzes, err := moodleClient.QuizAPI.GetQuizzesByCourse(ctx, c.ID)
-		if err != nil {
-			panic(err)
-		}
-		for _, q := range quizzes {
-			pp.Println(q)
-		}
+		fmt.Printf("%#v\n", c)
 	}
 }
