@@ -12,6 +12,8 @@ import (
 )
 
 func Test_quizAPI_GetQuizzesByCourse(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx      context.Context
 		courseID int
@@ -108,6 +110,8 @@ func Test_quizAPI_GetQuizzesByCourse(t *testing.T) {
 }
 
 func Test_quizAPI_GetUserAttempts(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx    context.Context
 		quizID int
@@ -193,6 +197,8 @@ func Test_quizAPI_GetUserAttempts(t *testing.T) {
 }
 
 func Test_quizAPI_GetAttemptReview(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx       context.Context
 		attemptID int
@@ -310,6 +316,8 @@ func Test_quizAPI_GetAttemptReview(t *testing.T) {
 }
 
 func Test_quizAPI_StartAttempt(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx    context.Context
 		quizID int
@@ -397,6 +405,8 @@ func Test_quizAPI_StartAttempt(t *testing.T) {
 }
 
 func Test_quizAPI_FinishAttempt(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ctx       context.Context
 		attemptID int

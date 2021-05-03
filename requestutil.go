@@ -61,3 +61,7 @@ func mapBoolToBitStr(b bool) string {
 	}
 	return "0"
 }
+
+func mapBitToBool(b int) bool {
+	return b == 1
+}

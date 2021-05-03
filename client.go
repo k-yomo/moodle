@@ -14,7 +14,7 @@ type Client struct {
 	apiURL     *url.URL
 	opts       *ClientOptions
 
-	AuthAPI   AuthAPI
+	UserAPI   UserAPI
 	CourseAPI CourseAPI
 	QuizAPI   QuizAPI
 }
@@ -54,6 +54,7 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		apiURL:     &apiURL,
 		opts:       opts,
 
+		UserAPI:   newUserAPI(opts.HttpClient, &apiURL),
 		CourseAPI: newCourseAPI(opts.HttpClient, &apiURL),
 		QuizAPI:   newQuizAPI(opts.HttpClient, &apiURL),
 	}
