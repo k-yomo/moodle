@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
 func getAndUnmarshal(ctx context.Context, client *http.Client, u *url.URL, to interface{}) error {
@@ -35,10 +34,6 @@ func mapResponseBodyToStruct(body io.ReadCloser, to interface{}) error {
 		return err
 	}
 
-	fmt.Println("**************************")
-	fmt.Println(string(bodyBytes))
-	fmt.Println("**************************")
-
 	apiError := APIError{}
 	if err := json.Unmarshal(bodyBytes, &apiError); err == nil && apiError.ErrorCode != "" {
 		return &apiError
@@ -59,13 +54,13 @@ func mapStrArrayToQueryParams(key string, strs []string) map[string]string {
 	return queries
 }
 
-func mapIntArrayToQueryParams(key string, ints []int) map[string]string {
-	queries := make(map[string]string)
-	for i, num := range ints {
-		queries[fmt.Sprintf("%s[%d]", key, i)] = strconv.Itoa(num)
-	}
-	return queries
-}
+// func mapIntArrayToQueryParams(key string, ints []int) map[string]string {
+// 	queries := make(map[string]string)
+// 	for i, num := range ints {
+// 		queries[fmt.Sprintf("%s[%d]", key, i)] = strconv.Itoa(num)
+// 	}
+// 	return queries
+// }
 
 // moodle takes bool as 1(true) or 0(false)
 func mapBoolToBitStr(b bool) string {

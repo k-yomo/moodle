@@ -61,4 +61,7 @@ func TestNewClientWithLogin(t *testing.T) {
 	if got.QuizAPI == nil {
 		t.Errorf("NewClientWithLogin(), got.QuizAPI = nil")
 	}
+	if got.GradeAPI == nil {
+		t.Errorf("NewClientWithLogin(), got.GradeAPI = nil")
+	}
 }
