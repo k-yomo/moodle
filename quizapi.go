@@ -2,7 +2,6 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/maputil"
 	"github.com/k-yomo/moodle/pkg/urlutil"
 	"net/http"
 	"net/url"
@@ -96,10 +95,8 @@ type getQuizzesByCourseResponse struct {
 func (q *quizAPI) GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error) {
 	u := urlutil.CopyWithQueries(
 		q.apiURL,
-		maputil.MergeStrMap(
-			map[string]string{"wsfunction": "mod_quiz_get_quizzes_by_courses"},
-			strArrayToQueryParams("courseids", []string{strconv.Itoa(courseID)}),
-		),
+		map[string]string{"wsfunction": "mod_quiz_get_quizzes_by_courses"},
+		mapStrArrayToQueryParams("courseids", []string{strconv.Itoa(courseID)}),
 	)
 
 	res := getQuizzesByCourseResponse{}

@@ -7,16 +7,18 @@ func Copy(u *url.URL) *url.URL {
 	return &copied
 }
 
-func SetQueries(u *url.URL, queries map[string]string) {
+func SetQueries(u *url.URL, queries ...map[string]string) {
 	q := u.Query()
-	for k, v := range queries {
-		q.Set(k, v)
+	for _, query := range queries {
+		for k, v := range query {
+			q.Set(k, v)
+		}
 	}
 	u.RawQuery = q.Encode()
 }
 
-func CopyWithQueries(original *url.URL, queries map[string]string) *url.URL {
+func CopyWithQueries(original *url.URL, queries ...map[string]string) *url.URL {
 	u := Copy(original)
-	SetQueries(u, queries)
+	SetQueries(u, queries...)
 	return u
 }
