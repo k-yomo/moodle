@@ -145,7 +145,9 @@ func mockGradeAPI(t *testing.T, response string) *gradeAPI {
 	s := httptest.NewServer(h)
 	apiURL, _ := url.Parse(s.URL)
 	return &gradeAPI{
-		httpClient: &http.Client{},
-		apiURL:     apiURL,
+		&apiClient{
+			httpClient: http.DefaultClient,
+			apiURL:     apiURL,
+		},
 	}
 }

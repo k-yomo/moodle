@@ -96,8 +96,10 @@ func Test_courseAPI_GetEnrolledCoursesByTimelineClassification(t *testing.T) {
 			s := httptest.NewServer(h)
 			apiURL, _ := url.Parse(s.URL)
 			c := &courseAPI{
-				httpClient: &http.Client{},
-				apiURL:     apiURL,
+				&apiClient{
+					httpClient: http.DefaultClient,
+					apiURL:     apiURL,
+				},
 			}
 			got, err := c.GetEnrolledCoursesByTimelineClassification(tt.args.ctx, tt.args.classification)
 			if (err != nil) != tt.wantErr {

@@ -2,9 +2,6 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -13,15 +10,11 @@ type CourseAPI interface {
 }
 
 type courseAPI struct {
-	httpClient *http.Client
-	apiURL     *url.URL
+	*apiClient
 }
 
-func newCourseAPI(httpClient *http.Client, apiURL *url.URL) *courseAPI {
-	return &courseAPI{
-		httpClient: httpClient,
-		apiURL:     apiURL,
-	}
+func newCourseAPI(apiClient *apiClient) *courseAPI {
+	return &courseAPI{apiClient}
 }
 
 type courseResponse struct {
@@ -50,15 +43,14 @@ type getEnrolledCoursesByTimelineClassificationResponse struct {
 }
 
 func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Context, classification CourseClassification) ([]*Course, error) {
-	u := urlutil.CopyWithQueries(c.apiURL, map[string]string{
+	res := getEnrolledCoursesByTimelineClassificationResponse{}
+	err := c.callMoodleFunction(ctx, &res, map[string]string{
 		"wsfunction":     "core_course_get_enrolled_courses_by_timeline_classification",
 		"classification": string(classification),
 	})
-	res := getEnrolledCoursesByTimelineClassificationResponse{}
-	if err := getAndUnmarshal(ctx, c.httpClient, u, &res); err != nil {
+	if err != nil {
 		return nil, err
 	}
-
 	return mapToCourseList(res.Courses), nil
 }
 

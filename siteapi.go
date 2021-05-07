@@ -2,9 +2,6 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
-	"net/url"
 )
 
 type SiteAPI interface {
@@ -12,15 +9,11 @@ type SiteAPI interface {
 }
 
 type siteAPI struct {
-	httpClient *http.Client
-	apiURL     *url.URL
+	*apiClient
 }
 
-func newSiteAPI(httpClient *http.Client, apiURL *url.URL) *siteAPI {
-	return &siteAPI{
-		httpClient: httpClient,
-		apiURL:     apiURL,
-	}
+func newSiteAPI(apiClient *apiClient) *siteAPI {
+	return &siteAPI{apiClient}
 }
 
 type siteInfoResponse struct {
@@ -56,15 +49,14 @@ type siteInfoResponse struct {
 	Theme                 string `json:"theme"`
 }
 
-func (u *siteAPI) GetSiteInfo(ctx context.Context) (*SiteInfo, error) {
-	url := urlutil.CopyWithQueries(u.apiURL, map[string]string{
+func (s *siteAPI) GetSiteInfo(ctx context.Context) (*SiteInfo, error) {
+	res := siteInfoResponse{}
+	err := s.callMoodleFunction(ctx, &res, map[string]string{
 		"wsfunction": "core_webservice_get_site_info",
 	})
-	res := siteInfoResponse{}
-	if err := getAndUnmarshal(ctx, u.httpClient, url, &res); err != nil {
+	if err != nil {
 		return nil, err
 	}
-
 	return mapToSiteInfo(&res), nil
 }
 

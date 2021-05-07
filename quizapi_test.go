@@ -465,7 +465,9 @@ func mockQuizAPI(t *testing.T, response string) *quizAPI {
 	s := httptest.NewServer(h)
 	apiURL, _ := url.Parse(s.URL)
 	return &quizAPI{
-		httpClient: &http.Client{},
-		apiURL:     apiURL,
+		&apiClient{
+			httpClient: http.DefaultClient,
+			apiURL:     apiURL,
+		},
 	}
 }

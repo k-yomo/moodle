@@ -130,7 +130,9 @@ func mockSiteAPI(t *testing.T, response string) *siteAPI {
 	s := httptest.NewServer(h)
 	apiURL, _ := url.Parse(s.URL)
 	return &siteAPI{
-		httpClient: &http.Client{},
-		apiURL:     apiURL,
+		&apiClient{
+			httpClient: http.DefaultClient,
+			apiURL:     apiURL,
+		},
 	}
 }

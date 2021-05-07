@@ -2,9 +2,6 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 )
@@ -14,15 +11,11 @@ type GradeAPI interface {
 }
 
 type gradeAPI struct {
-	httpClient *http.Client
-	apiURL     *url.URL
+	*apiClient
 }
 
-func newGradeAPI(httpClient *http.Client, apiURL *url.URL) *gradeAPI {
-	return &gradeAPI{
-		httpClient: httpClient,
-		apiURL:     apiURL,
-	}
+func newGradeAPI(apiClient *apiClient) *gradeAPI {
+	return &gradeAPI{apiClient}
 }
 
 type userGradeResponse struct {
@@ -67,13 +60,13 @@ type getGradeItems struct {
 }
 
 func (g *gradeAPI) GetGradeItems(ctx context.Context, userID int, courseID int) ([]*UserGrade, error) {
-	u := urlutil.CopyWithQueries(g.apiURL, map[string]string{
+	res := getGradeItems{}
+	err := g.callMoodleFunction(ctx, &res, map[string]string{
 		"wsfunction": "gradereport_user_get_grade_items",
 		"userid":     strconv.Itoa(userID),
 		"courseid":   strconv.Itoa(courseID),
 	})
-	res := getGradeItems{}
-	if err := getAndUnmarshal(ctx, g.httpClient, u, &res); err != nil {
+	if err != nil {
 		return nil, err
 	}
 	if len(res.Warnings) > 0 {

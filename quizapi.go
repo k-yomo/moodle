@@ -2,9 +2,6 @@ package moodle
 
 import (
 	"context"
-	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 )
@@ -18,15 +15,11 @@ type QuizAPI interface {
 }
 
 type quizAPI struct {
-	httpClient *http.Client
-	apiURL     *url.URL
+	*apiClient
 }
 
-func newQuizAPI(httpClient *http.Client, apiURL *url.URL) *quizAPI {
-	return &quizAPI{
-		httpClient: httpClient,
-		apiURL:     apiURL,
-	}
+func newQuizAPI(apiClient *apiClient) *quizAPI {
+	return &quizAPI{apiClient}
 }
 
 type quizResponse struct {
@@ -93,14 +86,15 @@ type getQuizzesByCourseResponse struct {
 }
 
 func (q *quizAPI) GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz, error) {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
+	res := getQuizzesByCourseResponse{}
+
+	err := q.callMoodleFunction(
+		ctx,
+		&res,
 		map[string]string{"wsfunction": "mod_quiz_get_quizzes_by_courses"},
 		mapStrArrayToQueryParams("courseids", []string{strconv.Itoa(courseID)}),
 	)
-
-	res := getQuizzesByCourseResponse{}
-	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return mapToQuizList(res.Quizzes), nil
@@ -111,16 +105,16 @@ type getUserAttemptsResponse struct {
 }
 
 func (q *quizAPI) GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttempt, error) {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
+	res := getUserAttemptsResponse{}
+	err := q.callMoodleFunction(
+		ctx,
+		&res,
 		map[string]string{
 			"wsfunction": "mod_quiz_get_user_attempts",
 			"quizid":     strconv.Itoa(quizID),
 		},
 	)
-
-	res := getUserAttemptsResponse{}
-	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return mapToQuizAttemptList(res.Attempts), nil
@@ -133,16 +127,16 @@ type getAttemptReviewResponse struct {
 }
 
 func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) (*QuizAttempt, []*QuizQuestion, error) {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
+	res := getAttemptReviewResponse{}
+	err := q.callMoodleFunction(
+		ctx,
+		&res,
 		map[string]string{
 			"wsfunction": "mod_quiz_get_attempt_review",
 			"attemptid":  strconv.Itoa(attemptID),
 		},
 	)
-
-	res := getAttemptReviewResponse{}
-	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+	if err != nil {
 		return nil, nil, err
 	}
 	return mapToQuizAttempt(res.Attempt), mapToQuizQuestionList(res.Questions), nil
@@ -154,19 +148,18 @@ type startAttemptResponse struct {
 }
 
 func (q *quizAPI) StartAttempt(ctx context.Context, quizID int) (*QuizAttempt, error) {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
+	res := startAttemptResponse{}
+	err := q.callMoodleFunction(
+		ctx,
+		&res,
 		map[string]string{
 			"wsfunction": "mod_quiz_start_attempt",
 			"quizid":     strconv.Itoa(quizID),
 		},
 	)
-
-	res := startAttemptResponse{}
-	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+	if err != nil {
 		return nil, err
 	}
-
 	if len(res.Warnings) > 0 {
 		return nil, res.Warnings
 	}
@@ -179,8 +172,10 @@ type finishAttemptResponse struct {
 }
 
 func (q *quizAPI) FinishAttempt(ctx context.Context, attemptID int, timeUp bool) error {
-	u := urlutil.CopyWithQueries(
-		q.apiURL,
+	res := finishAttemptResponse{}
+	err := q.callMoodleFunction(
+		ctx,
+		&res,
 		map[string]string{
 			"wsfunction":    "mod_quiz_process_attempt",
 			"attemptid":     strconv.Itoa(attemptID),
@@ -188,9 +183,7 @@ func (q *quizAPI) FinishAttempt(ctx context.Context, attemptID int, timeUp bool)
 			"timeup":        mapBoolToBitStr(timeUp),
 		},
 	)
-
-	res := finishAttemptResponse{}
-	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
+	if err != nil {
 		return err
 	}
 	if len(res.Warnings) > 0 {

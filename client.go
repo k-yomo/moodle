@@ -51,15 +51,17 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		"wstoken":            opts.Token,
 	})
 
+	apiClient := newAPIClient(opts.HttpClient, &apiURL)
+
 	return &Client{
 		serviceURL: serviceURL,
 		apiURL:     &apiURL,
 		opts:       opts,
 
-		SiteAPI:   newSiteAPI(opts.HttpClient, &apiURL),
-		UserAPI:   newUserAPI(opts.HttpClient, &apiURL),
-		CourseAPI: newCourseAPI(opts.HttpClient, &apiURL),
-		QuizAPI:   newQuizAPI(opts.HttpClient, &apiURL),
-		GradeAPI:  newGradeAPI(opts.HttpClient, &apiURL),
+		SiteAPI:   newSiteAPI(apiClient),
+		UserAPI:   newUserAPI(apiClient),
+		CourseAPI: newCourseAPI(apiClient),
+		QuizAPI:   newQuizAPI(apiClient),
+		GradeAPI:  newGradeAPI(apiClient),
 	}
 }
