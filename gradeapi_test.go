@@ -136,6 +136,150 @@ func Test_gradeAPI_GetGradeItems(t *testing.T) {
 	}
 }
 
+func Test_gradeAPI_GetGradesTable(t *testing.T) {
+	type args struct {
+		ctx      context.Context
+		userID   int
+		courseID int
+	}
+	tests := []struct {
+		name     string
+		args     args
+		response string
+		want     []*GradeTable
+		wantErr  bool
+	}{
+		{
+			name: "Successful response",
+			args: args{ctx: context.Background(), courseID: 1111},
+			response: `{
+  "tables": [
+    {
+      "courseid": 1111,
+      "userid": 222222,
+      "userfullname": "Test User",
+      "maxdepth": 3,
+      "tabledata": [
+        {
+          "itemname": {
+            "class": "level1 levelodd oddd1 b1b b1t column-itemname",
+            "colspan": 6,
+            "content": "<img class=\"icon icon itemicon\" alt=\"Category\" title=\"Category\" src=\"https:\/\/test.edu\/theme\/image.php\/lambda\/core\/1620139498\/i\/folder\" \/>Test Course",
+            "celltype": "th",
+            "id": "cat_25590_114374"
+          },
+          "leader": {
+            "class": "level1 levelodd oddd1 b1t b2b b1l column-leader",
+            "rowspan": 52
+          }
+        },
+        {
+          "itemname": {
+            "class": "level2 leveleven oddd2 b1b b1t column-itemname",
+            "colspan": 5,
+            "content": "<img class=\"icon icon itemicon\" alt=\"Category\" title=\"Category\" src=\"https:\/\/test.edu\/theme\/image.php\/lambda\/core\/1620139498\/i\/folder\" \/>Assignments",
+            "celltype": "th",
+            "id": "cat_25595_114374"
+          },
+          "leader": {
+            "class": "level2 leveleven oddd2 b1t b2b b1l column-leader",
+            "rowspan": 14
+          }
+        },
+        {
+          "itemname": {
+            "class": "level3 levelodd item b1b column-itemname",
+            "colspan": 1,
+            "content": "<a title=\"Assignment 1\" class=\"gradeitemheader\" href=\"https:\/\/test.edu\/mod\/workshop\/view.php?id=111111\"><img class=\"icon itemicon\" src=\"https:\/\/test.edu\/theme\/image.php\/lambda\/workshop\/1620139498\/icon\" alt=\"Workshop\" \/>Assignment 1<\/a>",
+            "celltype": "th",
+            "id": "row_179752_114374"
+          },
+          "grade": {
+            "class": "level3 levelodd item b1b itemcenter  column-grade",
+            "content": "92.00",
+            "headers": "cat_25595_114374 row_179752_114374 grade"
+          },
+          "range": {
+            "class": "level3 levelodd item b1b itemcenter  column-range",
+            "content": "0&ndash;100",
+            "headers": "cat_25595_114374 row_179752_114374 range"
+          },
+          "feedback": {
+            "class": "level3 levelodd item b1b feedbacktext column-feedback",
+            "content": "&nbsp;",
+            "headers": "cat_25595_114374 row_179752_114374 feedback"
+          },
+          "contributiontocoursetotal": {
+            "class": "level3 levelodd item b1b itemcenter  column-contributiontocoursetotal",
+            "content": "2.70 %",
+            "headers": "cat_25595_114374 row_179752_114374 contributiontocoursetotal"
+          }
+        }
+      ]
+    }
+  ]
+}`,
+			want: []*GradeTable{
+				{
+					CourseID:     1111,
+					UserID:       222222,
+					UserFullname: "Test User",
+					MaxDepth:     3,
+					ItemGroups: []*GradeTableItemGroup{
+						{
+							Name:  "Assignments",
+							Items: []*GradeTableItem{
+								{
+									ItemName:                  "Assignment 1",
+									ItemNameRawHTML:           `<a title="Assignment 1" class="gradeitemheader" href="https://test.edu/mod/workshop/view.php?id=111111"><img class="icon itemicon" src="https://test.edu/theme/image.php/lambda/workshop/1620139498/icon" alt="Workshop" />Assignment 1</a>`,
+									ItemURL:                   func() *string { s := "https://test.edu/mod/workshop/view.php?id=111111"; return &s }(),
+									IsGraded:                  true,
+									Grade:                     92,
+									GradeRangeMax:             100,
+									Feedback:                  "\u00a0",
+									FeedBackRawHTML:           "&nbsp;",
+									ContributionToCourseTotal: 2.7,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:     "Warning response",
+			args:     args{ctx: context.Background(), courseID: 1111},
+			response: `{"usergrades":[],"warnings":[{"item":"grade","itemid":1111,"warningcode":"1","message":"test warning"}]}`,
+			wantErr:  true,
+		},
+		{
+			name:     "Error response",
+			args:     args{ctx: context.Background(), courseID: 0000},
+			response: `{"exception":"dml_missing_record_exception","errorcode":"invalidrecord","message":"Can't find data record in database table course."}`,
+			wantErr:  true,
+		},
+		{
+			name:     "Invalid json response",
+			args:     args{ctx: context.Background(), courseID: 0000},
+			response: "{",
+			wantErr:  true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := mockGradeAPI(t, tt.response)
+			got, err := g.GetGradesTable(tt.args.ctx, tt.args.userID, tt.args.courseID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetGradesTable() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("GetGradesTable() (-got, +want)\n%s", diff)
+			}
+		})
+	}
+}
+
 func mockGradeAPI(t *testing.T, response string) *gradeAPI {
 	t.Helper()
 
