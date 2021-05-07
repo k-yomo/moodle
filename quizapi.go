@@ -103,7 +103,7 @@ func (q *quizAPI) GetQuizzesByCourse(ctx context.Context, courseID int) ([]*Quiz
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
-	return mapFromQuizListResponse(res.Quizzes), nil
+	return mapToQuizList(res.Quizzes), nil
 }
 
 type getUserAttemptsResponse struct {
@@ -123,7 +123,7 @@ func (q *quizAPI) GetUserAttempts(ctx context.Context, quizID int) ([]*QuizAttem
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, err
 	}
-	return mapFromQuizAttemptListResponse(res.Attempts), nil
+	return mapToQuizAttemptList(res.Attempts), nil
 }
 
 type getAttemptReviewResponse struct {
@@ -145,7 +145,7 @@ func (q *quizAPI) GetAttemptReview(ctx context.Context, attemptID int) (*QuizAtt
 	if err := getAndUnmarshal(ctx, q.httpClient, u, &res); err != nil {
 		return nil, nil, err
 	}
-	return mapFromQuizAttemptResponse(res.Attempt), mapFromQuizQuestionListResponse(res.Questions), nil
+	return mapToQuizAttempt(res.Attempt), mapToQuizQuestionList(res.Questions), nil
 }
 
 type startAttemptResponse struct {
@@ -170,7 +170,7 @@ func (q *quizAPI) StartAttempt(ctx context.Context, quizID int) (*QuizAttempt, e
 	if len(res.Warnings) > 0 {
 		return nil, res.Warnings
 	}
-	return mapFromQuizAttemptResponse(res.Attempt), nil
+	return mapToQuizAttempt(res.Attempt), nil
 }
 
 type finishAttemptResponse struct {
@@ -199,15 +199,15 @@ func (q *quizAPI) FinishAttempt(ctx context.Context, attemptID int, timeUp bool)
 	return nil
 }
 
-func mapFromQuizListResponse(quizResList []*quizResponse) []*Quiz {
+func mapToQuizList(quizResList []*quizResponse) []*Quiz {
 	quizzes := make([]*Quiz, 0, len(quizResList))
 	for _, quizRes := range quizResList {
-		quizzes = append(quizzes, mapFromQuizResponse(quizRes))
+		quizzes = append(quizzes, mapToQuiz(quizRes))
 	}
 	return quizzes
 }
 
-func mapFromQuizResponse(quizRes *quizResponse) *Quiz {
+func mapToQuiz(quizRes *quizResponse) *Quiz {
 	return &Quiz{
 		ID:                    quizRes.ID,
 		CourseID:              quizRes.CourseID,
@@ -233,15 +233,15 @@ func mapFromQuizResponse(quizRes *quizResponse) *Quiz {
 	}
 }
 
-func mapFromQuizAttemptListResponse(attemptResList []*quizAttemptResponse) []*QuizAttempt {
+func mapToQuizAttemptList(attemptResList []*quizAttemptResponse) []*QuizAttempt {
 	attempts := make([]*QuizAttempt, 0, len(attemptResList))
 	for _, attemptRes := range attemptResList {
-		attempts = append(attempts, mapFromQuizAttemptResponse(attemptRes))
+		attempts = append(attempts, mapToQuizAttempt(attemptRes))
 	}
 	return attempts
 }
 
-func mapFromQuizAttemptResponse(attemptRes *quizAttemptResponse) *QuizAttempt {
+func mapToQuizAttempt(attemptRes *quizAttemptResponse) *QuizAttempt {
 	var timeFinish, timeCheckState *time.Time
 	if attemptRes.TimeFinishUnix > 0 {
 		t := time.Unix(attemptRes.TimeFinishUnix, 0)
@@ -270,15 +270,15 @@ func mapFromQuizAttemptResponse(attemptRes *quizAttemptResponse) *QuizAttempt {
 	}
 }
 
-func mapFromQuizQuestionListResponse(quizQuestionResList []*quizQuestionResponse) []*QuizQuestion {
+func mapToQuizQuestionList(quizQuestionResList []*quizQuestionResponse) []*QuizQuestion {
 	questions := make([]*QuizQuestion, 0, len(quizQuestionResList))
 	for _, questionRes := range quizQuestionResList {
-		questions = append(questions, mapFromQuizQuestionResponse(questionRes))
+		questions = append(questions, mapToQuizQuestion(questionRes))
 	}
 	return questions
 }
 
-func mapFromQuizQuestionResponse(quizQuestionRes *quizQuestionResponse) *QuizQuestion {
+func mapToQuizQuestion(quizQuestionRes *quizQuestionResponse) *QuizQuestion {
 	return &QuizQuestion{
 		Slot:              quizQuestionRes.Slot,
 		Type:              quizQuestionRes.Type,

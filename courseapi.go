@@ -59,18 +59,18 @@ func (c *courseAPI) GetEnrolledCoursesByTimelineClassification(ctx context.Conte
 		return nil, err
 	}
 
-	return mapFromCourseListResponse(res.Courses), nil
+	return mapToCourseList(res.Courses), nil
 }
 
-func mapFromCourseListResponse(courseResList []*courseResponse) []*Course {
+func mapToCourseList(courseResList []*courseResponse) []*Course {
 	courses := make([]*Course, 0, len(courseResList))
 	for _, courseRes := range courseResList {
-		courses = append(courses, mapFromCourseResponse(courseRes))
+		courses = append(courses, mapToCourse(courseRes))
 	}
 	return courses
 }
 
-func mapFromCourseResponse(courseRes *courseResponse) *Course {
+func mapToCourse(courseRes *courseResponse) *Course {
 	return &Course{
 		ID:              courseRes.ID,
 		FullName:        courseRes.FullName,

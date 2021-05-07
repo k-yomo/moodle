@@ -65,10 +65,10 @@ func (u *siteAPI) GetSiteInfo(ctx context.Context) (*SiteInfo, error) {
 		return nil, err
 	}
 
-	return mapFromSiteInfoResponse(&res), nil
+	return mapToSiteInfo(&res), nil
 }
 
-func mapFromSiteInfoResponse(siteInfoRes *siteInfoResponse) *SiteInfo {
+func mapToSiteInfo(siteInfoRes *siteInfoResponse) *SiteInfo {
 	functions := make([]*SiteFunctionVersion, 0, len(siteInfoRes.Functions))
 	for _, f := range siteInfoRes.Functions {
 		functions = append(functions, &SiteFunctionVersion{

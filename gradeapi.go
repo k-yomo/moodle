@@ -80,36 +80,36 @@ func (g *gradeAPI) GetGradeItems(ctx context.Context, userID int, courseID int) 
 		return nil, res.Warnings
 	}
 
-	return mapFromUserGradeListResponse(res.UserGrades), nil
+	return mapToUserGradeList(res.UserGrades), nil
 }
 
-func mapFromUserGradeListResponse(userGradeResList []*userGradeResponse) []*UserGrade {
+func mapToUserGradeList(userGradeResList []*userGradeResponse) []*UserGrade {
 	userGrades := make([]*UserGrade, 0, len(userGradeResList))
 	for _, gradeItemRes := range userGradeResList {
-		userGrades = append(userGrades, mapFromUserGradeResponse(gradeItemRes))
+		userGrades = append(userGrades, mapToUserGrade(gradeItemRes))
 	}
 	return userGrades
 }
 
-func mapFromUserGradeResponse(userGradeRes *userGradeResponse) *UserGrade {
+func mapToUserGrade(userGradeRes *userGradeResponse) *UserGrade {
 	return &UserGrade{
 		CourseID:     userGradeRes.CourseID,
 		UserID:       userGradeRes.UserID,
 		UserFullname: userGradeRes.UserFullname,
 		MaxDepth:     userGradeRes.MaxDepth,
-		GradeItems:   mapFromGradeItemListResponse(userGradeRes.GradeItems),
+		GradeItems:   mapToGradeItemList(userGradeRes.GradeItems),
 	}
 }
 
-func mapFromGradeItemListResponse(gradeItemResList []*gradeItemResponse) []*GradeItem {
+func mapToGradeItemList(gradeItemResList []*gradeItemResponse) []*GradeItem {
 	gradeItems := make([]*GradeItem, 0, len(gradeItemResList))
 	for _, gradeItemRes := range gradeItemResList {
-		gradeItems = append(gradeItems, mapFromGradeItemResponse(gradeItemRes))
+		gradeItems = append(gradeItems, mapToGradeItem(gradeItemRes))
 	}
 	return gradeItems
 }
 
-func mapFromGradeItemResponse(gradeItemRes *gradeItemResponse) *GradeItem {
+func mapToGradeItem(gradeItemRes *gradeItemResponse) *GradeItem {
 	var gradeDateSubmitted, gradeDateGraded *time.Time
 	if gradeItemRes.GradeDateSubmittedUnix != nil {
 		t := time.Unix(*gradeItemRes.GradeDateSubmittedUnix, 0)
