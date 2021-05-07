@@ -227,7 +227,7 @@ func Test_gradeAPI_GetGradesTable(t *testing.T) {
 					MaxDepth:     3,
 					ItemGroups: []*GradeTableItemGroup{
 						{
-							Name:  "Assignments",
+							Name: "Assignments",
 							Items: []*GradeTableItem{
 								{
 									ItemName:                  "Assignment 1",
