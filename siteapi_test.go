@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func Test_userAPI_GetSiteInfo(t *testing.T) {
+func Test_siteAPI_GetSiteInfo(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
@@ -108,8 +108,8 @@ func Test_userAPI_GetSiteInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			u := mockUserAPI(t, tt.response)
-			got, err := u.GetSiteInfo(tt.args.ctx)
+			s := mockSiteAPI(t, tt.response)
+			got, err := s.GetSiteInfo(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetSiteInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -121,7 +121,7 @@ func Test_userAPI_GetSiteInfo(t *testing.T) {
 	}
 }
 
-func mockUserAPI(t *testing.T, response string) *userAPI {
+func mockSiteAPI(t *testing.T, response string) *siteAPI {
 	t.Helper()
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func mockUserAPI(t *testing.T, response string) *userAPI {
 	})
 	s := httptest.NewServer(h)
 	apiURL, _ := url.Parse(s.URL)
-	return &userAPI{
+	return &siteAPI{
 		httpClient: &http.Client{},
 		apiURL:     apiURL,
 	}

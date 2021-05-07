@@ -35,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	siteInfo, err := moodleClient.UserAPI.GetSiteInfo(ctx)
+	siteInfo, err := moodleClient.SiteAPI.GetSiteInfo(ctx)
 	if err != nil {
 		panic(err)
 	}
