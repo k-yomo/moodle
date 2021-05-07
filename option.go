@@ -5,11 +5,13 @@ import "net/http"
 type ClientOptions struct {
 	Token      string
 	HttpClient *http.Client
+	Debug      bool
 }
 
 func newDefaultClientOptions() *ClientOptions {
 	return &ClientOptions{
 		HttpClient: http.DefaultClient,
+		Debug:      false,
 	}
 }
 
@@ -35,6 +37,14 @@ func newClientOptionFunc(f func(pc *ClientOptions)) *clientOptionFunc {
 func WithHTTPClient(httpClient *http.Client) ClientOption {
 	return newClientOptionFunc(func(c *ClientOptions) {
 		c.HttpClient = httpClient
+	})
+}
+
+// WithDebugEnabled enable debug logs
+// this option is should be used in development only.
+func WithDebugEnabled() ClientOption {
+	return newClientOptionFunc(func(c *ClientOptions) {
+		c.Debug = true
 	})
 }
 

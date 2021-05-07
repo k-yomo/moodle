@@ -3,8 +3,6 @@ package moodle
 import (
 	"context"
 	"github.com/k-yomo/moodle/pkg/urlutil"
-	"net/http"
-	"net/url"
 	"path"
 )
 
@@ -13,15 +11,11 @@ type AuthAPI interface {
 }
 
 type authAPI struct {
-	httpClient *http.Client
-	serviceURL *url.URL
+	*apiClient
 }
 
-func newAuthAPI(httpClient *http.Client, serviceURL *url.URL) *authAPI {
-	return &authAPI{
-		httpClient: httpClient,
-		serviceURL: serviceURL,
-	}
+func newAuthAPI(apiClient *apiClient) *authAPI {
+	return &authAPI{apiClient}
 }
 
 type LoginResponse struct {
@@ -37,7 +31,7 @@ func (a *authAPI) Login(ctx context.Context, username, password string) (*LoginR
 	})
 	u.Path = path.Join(u.Path, "/login/token.php")
 	res := LoginResponse{}
-	if err := getAndUnmarshal(ctx, a.httpClient, u, &res); err != nil {
+	if err := a.getAndUnmarshal(ctx, u, &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
