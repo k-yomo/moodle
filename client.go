@@ -19,9 +19,9 @@ type Client struct {
 }
 
 // NewClient creates a new Moodle client.
-func NewClient(ctx context.Context, serviceURL *url.URL, token string, opt ...ClientOption) (*Client, error) {
-	// TODO: Validate token
-	return newClient(serviceURL, append(opt, withToken(token))...), nil
+func NewClient(ctx context.Context, serviceURL *url.URL, authToken string, opt ...ClientOption) (*Client, error) {
+	// TODO: Validate authToken
+	return newClient(serviceURL, append(opt, withAuthToken(authToken))...), nil
 }
 
 // NewClientWithLogin creates a new Moodle client with token retrieved from login request.
@@ -41,7 +41,7 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 	for _, o := range opt {
 		o.apply(opts)
 	}
-	apiClient := newAPIClient(opts.HttpClient, serviceURL, opts.Token, opts.Debug)
+	apiClient := newAPIClient(opts.HttpClient, serviceURL, opts.AuthToken, opts.Debug)
 
 	return &Client{
 		opts:      opts,
@@ -53,4 +53,8 @@ func newClient(serviceURL *url.URL, opt ...ClientOption) *Client {
 		QuizAPI:   newQuizAPI(apiClient),
 		GradeAPI:  newGradeAPI(apiClient),
 	}
+}
+
+func (c *Client) AuthToken() string {
+	return c.apiClient.authToken
 }

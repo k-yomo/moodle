@@ -3,7 +3,7 @@ package moodle
 import "net/http"
 
 type ClientOptions struct {
-	Token      string
+	AuthToken  string
 	HttpClient *http.Client
 	Debug      bool
 }
@@ -48,8 +48,8 @@ func WithDebugEnabled() ClientOption {
 	})
 }
 
-func withToken(token string) ClientOption {
+func withAuthToken(authToken string) ClientOption {
 	return newClientOptionFunc(func(c *ClientOptions) {
-		c.Token = token
+		c.AuthToken = authToken
 	})
 }

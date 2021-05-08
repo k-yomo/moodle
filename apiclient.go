@@ -11,21 +11,23 @@ import (
 )
 
 type apiClient struct {
+	authToken  string
 	httpClient *http.Client
 	serviceURL *url.URL
 	apiURL     *url.URL
 	debug      bool
 }
 
-func newAPIClient(httpClient *http.Client, serviceURL *url.URL, token string, debug bool) *apiClient {
+func newAPIClient(httpClient *http.Client, serviceURL *url.URL, authToken string, debug bool) *apiClient {
 	apiURL := urlutil.Copy(serviceURL)
 	apiURL.Path = path.Join(apiURL.Path, "/webservice/rest/server.php")
 	urlutil.SetQueries(apiURL, map[string]string{
 		"moodlewsrestformat": "json",
-		"wstoken":            token,
+		"wstoken":            authToken,
 	})
 
 	return &apiClient{
+		authToken:  authToken,
 		httpClient: httpClient,
 		serviceURL: serviceURL,
 		apiURL:     apiURL,
@@ -33,9 +35,10 @@ func newAPIClient(httpClient *http.Client, serviceURL *url.URL, token string, de
 	}
 }
 
-func (a *apiClient) updateToken(token string) {
+func (a *apiClient) updateToken(authToken string) {
+	a.authToken = authToken
 	urlutil.SetQueries(a.apiURL, map[string]string{
-		"wstoken": token,
+		"wstoken": authToken,
 	})
 }
 
