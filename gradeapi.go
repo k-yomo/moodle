@@ -271,6 +271,10 @@ func mapToGradeTableItemGroupList(tableDataItemResList []*tableDataItemResponse)
 			}
 			groupName = itemNameDoc.Text()
 		} else {
+			// Exclude non graded item
+			if gradeItemRes.ContributionToCourseTotal == nil || gradeItemRes.ContributionToCourseTotal.Content == "-" {
+				continue
+			}
 			gradeTableItem, err := mapToGradeTableItem(gradeItemRes)
 			if err != nil {
 				return nil, err

@@ -214,6 +214,35 @@ func Test_gradeAPI_GetGradesTable(t *testing.T) {
             "content": "2.70 %",
             "headers": "cat_25595_114374 row_179752_114374 contributiontocoursetotal"
           }
+        },
+        {
+          "itemname": {
+            "class": "level1 levelodd oddd1 baggt b2b column-itemname",
+            "colspan": 2,
+            "content": "<span class=\"gradeitemheader\" title=\"Course total\" tabindex=\"0\"><img class=\"icon icon itemicon\" alt=\"Weighted mean of grades\" title=\"Weighted mean of grades\" src=\"https:\/\/test.edu\/theme\/image.php\/lambda\/core\/1620139498\/i\/agg_mean\" \/>Course total<\/span><div class=\"gradeitemdescription\">Weighted mean of grades. Include empty grades.<\/div><div class=\"gradeitemdescriptionfiller\"><\/div>",
+            "celltype": "th",
+            "id": "row_179750_114374"
+          },
+          "grade": {
+            "class": "level1 levelodd oddd1 baggt b2b itemcenter  column-grade",
+            "content": "30.79",
+            "headers": "cat_25590_114374 row_179750_114374 grade"
+          },
+          "range": {
+            "class": "level1 levelodd oddd1 baggt b2b itemcenter  column-range",
+            "content": "0&ndash;100",
+            "headers": "cat_25590_114374 row_179750_114374 range"
+          },
+          "feedback": {
+            "class": "level1 levelodd oddd1 baggt b2b feedbacktext column-feedback",
+            "content": "&nbsp;",
+            "headers": "cat_25590_114374 row_179750_114374 feedback"
+          },
+          "contributiontocoursetotal": {
+            "class": "level1 levelodd oddd1 baggt b2b itemcenter  column-contributiontocoursetotal",
+            "content": "-",
+            "headers": "cat_25590_114374 row_179750_114374 contributiontocoursetotal"
+          }
         }
       ]
     }
