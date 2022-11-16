@@ -1,13 +1,16 @@
 package moodle
 
 import (
+	"bytes"
 	"context"
-	"github.com/k-yomo/moodle/pkg/urlutil"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/k-yomo/moodle/pkg/urlutil"
 )
 
 type apiClient struct {
@@ -50,6 +53,51 @@ func (a *apiClient) callMoodleFunction(ctx context.Context, to interface{}, quer
 
 func (a *apiClient) getAndUnmarshal(ctx context.Context, u *url.URL, to interface{}) error {
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	if err != nil {
+		return err
+	}
+	if a.debug {
+		log.Printf(`[INFO] make http request
+	method: %s
+	url: %s
+`, req.Method, req.URL.String())
+	}
+
+	resp, err := a.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if a.debug {
+		log.Printf(`[INFO] raw response
+	status: %s
+	body: %s
+
+`, resp.Status, string(bodyBytes))
+	}
+	if err := mapResponseBodyToStruct(bodyBytes, to); err != nil {
+		return err
+	}
+	return nil
+}
+
+// callMoodleFunction call moodle's service function and map the response json to `to` param.
+func (a *apiClient) callMoodleFunctionPost(ctx context.Context, to interface{}, body interface{}, queryParams ...map[string]string) error {
+	u := urlutil.CopyWithQueries(a.apiURL, queryParams...)
+	return a.postAndUnmarshal(ctx, u, to, body)
+}
+
+func (a *apiClient) postAndUnmarshal(ctx context.Context, u *url.URL, to interface{}, body interface{}) error {
+	newBody, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", u.String(), bytes.NewReader(newBody))
 	if err != nil {
 		return err
 	}
